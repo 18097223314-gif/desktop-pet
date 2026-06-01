@@ -74,11 +74,23 @@ class IPCHandlers {
     ipcMain.handle(channel, async (event, payload) => {
       const requestId = payload?.requestId || Date.now().toString();
       try {
+        // 基础输入校验
+        if (payload?.quantity !== undefined && payload.quantity != null) {
+          const q = Number(payload.quantity);
+          if (!Number.isInteger(q) || q <= 0) {
+            throw new Error('数量必须为正整数');
+          }
+        }
+        if (payload?.itemId !== undefined && payload.itemId != null) {
+          if (typeof payload.itemId !== 'string' || !payload.itemId.trim()) {
+            throw new Error('道具ID不能为空');
+          }
+        }
         const data = await handler(payload, event);
         return { success: true, data, error: null, requestId };
       } catch (err) {
         console.error(`[IPC] ${channel} 错误:`, err.message);
-        return { success: false, data: null, error: err.message, requestId };
+        return { success: false, data: null, error: '操作失败，请稍后重试', requestId };
       }
     });
   }
@@ -89,9 +101,8 @@ class IPCHandlers {
 
   _handlePetActions() {
     // 抚摸
-    this._wrapHandler(IPC_CHANNELS.PET_PET, (payload) => {
-      const userId = payload?.userId || 1;
-      const result = this.petAI.pet(userId);
+    this._wrapHandler(IPC_CHANNELS.PET_PET, () => {
+      const result = this.petAI.pet(1);
       this.saveManager.markDirty('petAI');
       return result;
     });
@@ -125,13 +136,13 @@ class IPCHandlers {
   _handleEconomy() {
     // 获取背包
     this._wrapHandler(IPC_CHANNELS.ECONOMY_INVENTORY, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       return this.economy.getInventory(userId);
     });
 
     // 使用道具
     this._wrapHandler(IPC_CHANNELS.ECONOMY_USE_ITEM, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       const itemId = payload?.itemId;
       if (!itemId) throw new Error('缺少道具ID');
       const result = this.economy.useItem(userId, itemId);
@@ -141,7 +152,7 @@ class IPCHandlers {
 
     // 出售道具
     this._wrapHandler(IPC_CHANNELS.ECONOMY_SELL, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       const itemId = payload?.itemId;
       const quantity = payload?.quantity || 1;
       if (!itemId) throw new Error('缺少道具ID');
@@ -152,7 +163,7 @@ class IPCHandlers {
 
     // 获取余额
     this._wrapHandler(IPC_CHANNELS.ECONOMY_BALANCE, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       return this.economy.getBalance(userId);
     });
 
@@ -164,7 +175,7 @@ class IPCHandlers {
 
     // 购买道具
     this._wrapHandler(IPC_CHANNELS.ECONOMY_BUY, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       const itemId = payload?.itemId;
       const quantity = payload?.quantity || 1;
       if (!itemId) throw new Error('缺少道具ID');
@@ -181,13 +192,13 @@ class IPCHandlers {
   _handleQuests() {
     // 每日任务
     this._wrapHandler(IPC_CHANNELS.QUEST_DAILY, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       return this.questSystem.getDailyTasks(userId);
     });
 
     // 领取任务奖励
     this._wrapHandler(IPC_CHANNELS.QUEST_CLAIM, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       const taskId = payload?.taskId;
       if (!taskId) throw new Error('缺少任务ID');
       const result = this.questSystem.claimTaskReward(userId, taskId);
@@ -197,13 +208,13 @@ class IPCHandlers {
 
     // 获取成就列表
     this._wrapHandler(IPC_CHANNELS.QUEST_ACHIEVEMENTS, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       return this.questSystem.getAchievements(userId);
     });
 
     // 领取成就奖励
     this._wrapHandler(IPC_CHANNELS.QUEST_ACHIEVEMENT_CLAIM, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       const achievementId = payload?.achievementId;
       if (!achievementId) throw new Error('缺少成就ID');
       const result = this.questSystem.claimAchievement(userId, achievementId);
@@ -219,7 +230,7 @@ class IPCHandlers {
   _handleWork() {
     // 开始打工
     this._wrapHandler(IPC_CHANNELS.WORK_START, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       const workType = payload?.workType;
       if (!workType) throw new Error('缺少工作类型');
       const result = this.workSystem.startWork(userId, workType);
@@ -229,7 +240,7 @@ class IPCHandlers {
 
     // 取消打工
     this._wrapHandler(IPC_CHANNELS.WORK_CANCEL, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       const result = this.workSystem.cancelWork(userId);
       this.saveManager.markDirty('work');
       return result;
@@ -237,13 +248,13 @@ class IPCHandlers {
 
     // 获取打工状态
     this._wrapHandler(IPC_CHANNELS.WORK_STATUS, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       return this.workSystem.getWorkStatus(userId);
     });
 
     // 完成打工
     this._wrapHandler(IPC_CHANNELS.WORK_FINISH, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       const result = this.workSystem.finishWork(userId);
       this.saveManager.markDirty('work');
       return result;
@@ -326,13 +337,13 @@ class IPCHandlers {
   _handleMiniGame() {
     // 获取小游戏列表
     this._wrapHandler(IPC_CHANNELS.MINIGAME_LIST, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       return this.miniGameManager.getGameList(userId);
     });
 
     // 开始游戏
     this._wrapHandler(IPC_CHANNELS.MINIGAME_START, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       const gameType = payload?.gameType;
       if (!gameType) throw new Error('缺少游戏类型');
       const result = this.miniGameManager.startGame(userId, gameType);
@@ -342,7 +353,7 @@ class IPCHandlers {
 
     // 结束游戏
     this._wrapHandler(IPC_CHANNELS.MINIGAME_FINISH, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       const gameType = payload?.gameType;
       const score = payload?.score || 0;
       if (!gameType) throw new Error('缺少游戏类型');
@@ -353,7 +364,7 @@ class IPCHandlers {
 
     // 获取游戏记录
     this._wrapHandler(IPC_CHANNELS.MINIGAME_RECORDS, (payload) => {
-      const userId = payload?.userId || 1;
+      const userId = 1;
       const gameType = payload?.gameType || null;
       return this.miniGameManager.getGameRecords(userId, gameType);
     });
