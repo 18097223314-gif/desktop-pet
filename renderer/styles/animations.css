@@ -1,0 +1,120 @@
+/* ══════════════════════════════════════════════
+   爪爪桌宠 — 动画系统 (Animations)
+   所有 @keyframes 定义 + 对应 CSS 工具类
+
+   依赖：tokens.css（cubic-bezier 缓动变量）
+   ══════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────
+   1. 面板入场
+   用法：<div class="dp-panel anim-panel-in">
+   ───────────────────────────────────────────── */
+@keyframes panel-in {
+  from { opacity: 0; transform: scale(0.94) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.anim-panel-in {
+  animation: panel-in var(--dp-transition-normal) ease-out forwards;
+}
+
+/* ─────────────────────────────────────────────
+   2. 面板出场
+   用法：<div class="dp-panel anim-panel-out">
+   ───────────────────────────────────────────── */
+@keyframes panel-out {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to   { opacity: 0; transform: scale(0.94) translateY(8px); }
+}
+.anim-panel-out {
+  animation: panel-out var(--dp-transition-normal) ease-in forwards;
+}
+
+/* ─────────────────────────────────────────────
+   3. 稀有度流光 — 传说/史诗品质物品
+   用法：<div class="anim-shimmer" style="background: linear-gradient(...); background-size: 200% 100%;">
+   ───────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.anim-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+  background-size: 200% 100%;
+}
+
+/* ─────────────────────────────────────────────
+   4. 粒子浮动 — 换装预览粒子效果
+   用法：<span class="anim-particle-float">
+   ───────────────────────────────────────────── */
+@keyframes particle-float {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.6; }
+  50%      { transform: translateY(-20px) scale(1.2); opacity: 1; }
+}
+.anim-particle-float {
+  animation: particle-float 3s ease-in-out infinite;
+}
+
+/* ─────────────────────────────────────────────
+   5. 打字光标闪烁 — Bubble 打字机效果
+   用法：<span class="anim-typewriter-cursor">|</span>
+   ───────────────────────────────────────────── */
+@keyframes typewriter-cursor {
+  0%, 100% { border-color: transparent; }
+  50%      { border-color: var(--dp-primary-light); }
+}
+.anim-typewriter-cursor {
+  animation: typewriter-cursor 0.8s step-end infinite;
+  border-right: 2px solid transparent;
+  display: inline-block;
+}
+
+/* ─────────────────────────────────────────────
+   6. Modal 入场
+   用法：Modal 组件内部使用
+   ───────────────────────────────────────────── */
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.9) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.anim-modal-in {
+  animation: modal-in var(--dp-transition-spring) ease-out forwards;
+}
+
+/* ─────────────────────────────────────────────
+   7. Modal 出场
+   用法：Modal 组件内部使用
+   ───────────────────────────────────────────── */
+@keyframes modal-out {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to   { opacity: 0; transform: scale(0.9) translateY(12px); }
+}
+.anim-modal-out {
+  animation: modal-out var(--dp-transition-normal) ease-in forwards;
+}
+
+/* ─────────────────────────────────────────────
+   8. 卡片悬浮 — hover 微浮动
+   用法：<div class="dp-card anim-card-hover">
+   ───────────────────────────────────────────── */
+@keyframes card-hover {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-4px); }
+}
+.anim-card-hover {
+  transition: transform var(--dp-transition-spring);
+}
+.anim-card-hover:hover {
+  animation: card-hover 500ms ease-out forwards;
+}
+
+/* ─────────────────────────────────────────────
+   9. 光晕脉冲 — 宠物发光效果
+   用法：<div class="anim-glow-pulse">
+   ───────────────────────────────────────────── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(124, 92, 252, 0.2); }
+  50%      { box-shadow: 0 0 24px rgba(124, 92, 252, 0.5); }
+}
+.anim-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}

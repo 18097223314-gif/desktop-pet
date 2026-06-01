@@ -1,0 +1,167 @@
+/* ══════════════════════════════════════════════
+   爪爪桌宠 — 设计令牌 (Design Tokens)
+   所有 UI 组件的唯一设计数据源
+
+   风格：Dark Glassmorphism
+   主色调：紫色 #7c5cfc
+   变量总数：75+
+
+   命名规范：--dp-{category}-{name}
+   用途：被 animations.css、组件样式、Modal 等引用
+   ══════════════════════════════════════════════ */
+
+:root {
+  /* ───────────────────────────────────────────
+     品牌色 (5)
+     Primary 为紫色主色，Accent 为粉红包裹
+     ─────────────────────────────────────────── */
+  --dp-primary:       #7c5cfc;
+  --dp-primary-light: #9b82fc;
+  --dp-primary-dark:  #5a3de6;
+  --dp-primary-50:    #f0ecff;
+  --dp-accent:        #ff6b9d;
+
+  /* ───────────────────────────────────────────
+     中性色 (8) — 50(最浅) ~ 700(最深)
+     用于文字、背景渐变、边框灰度层次
+     ─────────────────────────────────────────── */
+  --dp-neutral-50:  #f8f8f8;
+  --dp-neutral-100: #e8e8e8;
+  --dp-neutral-200: #cccccc;
+  --dp-neutral-300: #999999;
+  --dp-neutral-400: #666666;
+  --dp-neutral-500: #555555;
+  --dp-neutral-600: #404040;
+  --dp-neutral-700: #333333;
+
+  /* ───────────────────────────────────────────
+     功能色 (5)
+     success / warning / danger / info + gold(传说)
+     ─────────────────────────────────────────── */
+  --dp-success:   #5cdb72;
+  --dp-warning:   #ffc83d;
+  --dp-danger:    #ff5555;
+  --dp-info:      #4db8ff;
+  --dp-gold:      #ffd700;
+
+  /* ───────────────────────────────────────────
+     背景色 (5)
+     半透明深色，配合 backdrop-filter blur
+     ─────────────────────────────────────────── */
+  --dp-bg-panel:      rgba(30, 30, 30, 0.95);
+  --dp-bg-card:       rgba(45, 45, 45, 0.85);
+  --dp-bg-card-hover: rgba(55, 55, 55, 0.95);
+  --dp-bg-input:      rgba(40, 40, 40, 0.9);
+  --dp-bg-overlay:    rgba(0, 0, 0, 0.5);
+
+  /* ───────────────────────────────────────────
+     边框色 (3)
+     ─────────────────────────────────────────── */
+  --dp-border:        rgba(255, 255, 255, 0.08);
+  --dp-border-light:  rgba(255, 255, 255, 0.12);
+  --dp-border-active: rgba(124, 92, 252, 0.5);
+
+  /* ───────────────────────────────────────────
+     文字色 (6)
+     ─────────────────────────────────────────── */
+  --dp-text-primary:   #e8e8e8;
+  --dp-text-secondary: #999;
+  --dp-text-muted:     #666;
+  --dp-text-danger:    #ff5555;
+  --dp-text-success:   #5cdb72;
+  --dp-text-warning:   #ffc83d;
+
+  /* ───────────────────────────────────────────
+     间距系统 (10) — 2px 步进 + 指数增长
+     ─────────────────────────────────────────── */
+  --dp-space-2xs:  2px;
+  --dp-space-xs:   4px;
+  --dp-space-sm:   8px;
+  --dp-space-md:   12px;
+  --dp-space-lg:   16px;
+  --dp-space-xl:   24px;
+  --dp-space-2xl:  32px;
+  --dp-space-3xl:  48px;
+  --dp-space-4xl:  64px;
+  --dp-space-5xl:  96px;
+
+  /* ───────────────────────────────────────────
+     字体 (6)
+     ─────────────────────────────────────────── */
+  --dp-font:        'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --dp-font-xs:     10px;
+  --dp-font-sm:     12px;
+  --dp-font-md:     14px;
+  --dp-font-lg:     16px;
+  --dp-font-xl:     20px;
+
+  /* ───────────────────────────────────────────
+     行高 (3)
+     ─────────────────────────────────────────── */
+  --dp-line-height-tight:   1.3;
+  --dp-line-height-normal:  1.5;
+  --dp-line-height-relaxed: 1.7;
+
+  /* ───────────────────────────────────────────
+     字间距 (2)
+     ─────────────────────────────────────────── */
+  --dp-letter-spacing-tight: -0.025em;
+  --dp-letter-spacing-normal: 0;
+
+  /* ───────────────────────────────────────────
+     阴影 (8) — 从小到大气氛阴影
+     ─────────────────────────────────────────── */
+  --dp-shadow-xs:     0 1px 3px rgba(0, 0, 0, 0.2);
+  --dp-shadow-sm:     0 2px 8px rgba(0, 0, 0, 0.3);
+  --dp-shadow-md:     0 4px 16px rgba(0, 0, 0, 0.4);
+  --dp-shadow-lg:     0 8px 32px rgba(0, 0, 0, 0.5);
+  --dp-shadow-xl:     0 16px 48px rgba(0, 0, 0, 0.6);
+  --dp-shadow-glow:   0 0 20px rgba(124, 92, 252, 0.3);
+  --dp-shadow-inset:  inset 0 1px 2px rgba(0, 0, 0, 0.3);
+  --dp-shadow-card:   0 2px 12px rgba(0, 0, 0, 0.35);
+
+  /* ───────────────────────────────────────────
+     模糊 (5) — backdrop-filter 用
+     ─────────────────────────────────────────── */
+  --dp-blur-sm:     blur(8px);
+  --dp-blur:        blur(20px);
+  --dp-blur-lg:     blur(40px);
+  --dp-blur-xl:     blur(60px);
+  --dp-blur-strong: blur(80px);
+
+  /* ───────────────────────────────────────────
+     圆角 (6)
+     ─────────────────────────────────────────── */
+  --dp-radius-xs:   4px;
+  --dp-radius-sm:   8px;
+  --dp-radius-md:   12px;
+  --dp-radius-lg:   16px;
+  --dp-radius-xl:   20px;
+  --dp-radius-pill: 999px;
+
+  /* ───────────────────────────────────────────
+     过渡动画 (6) — 使用 cubic-bezier 缓动
+     ─────────────────────────────────────────── */
+  --dp-transition-fast:   150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --dp-transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --dp-transition-slow:   300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --dp-transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dp-transition-smooth: 400ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  --dp-transition-bounce: 600ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* ───────────────────────────────────────────
+     Z-index (6) — 层级管理
+     ─────────────────────────────────────────── */
+  --dp-z-dropdown:        1000;
+  --dp-z-sticky:          1020;
+  --dp-z-fixed:           1030;
+  --dp-z-modal-backdrop:  1040;
+  --dp-z-modal:           1050;
+  --dp-z-toast:           1060;
+
+  /* ───────────────────────────────────────────
+     面板尺寸 (2)
+     ─────────────────────────────────────────── */
+  --dp-panel-max-w: 520px;
+  --dp-panel-max-h: 480px;
+}

@@ -1,0 +1,140 @@
+erDiagram
+    users {
+        INTEGER id PK
+        TEXT    username
+        TEXT    avatar
+        INTEGER created_at
+        INTEGER last_active_at
+    }
+
+    pet_status {
+        INTEGER id        PK
+        INTEGER user_id   FK
+        INTEGER hunger
+        INTEGER cleanliness
+        INTEGER mood
+        INTEGER stamina
+        INTEGER exp
+        INTEGER level
+        INTEGER gold
+        INTEGER diamond
+        INTEGER affinity
+        TEXT    emotion_state
+        INTEGER updated_at
+    }
+
+    pet_skills {
+        INTEGER id         PK
+        INTEGER user_id    FK
+        TEXT    skill_id
+        INTEGER level
+        INTEGER proficiency
+        INTEGER max_proficiency
+        INTEGER unlocked_at
+    }
+
+    inventory {
+        INTEGER id       PK
+        INTEGER user_id  FK
+        TEXT    item_id
+        TEXT    item_type
+        INTEGER quantity
+        INTEGER acquired_at
+    }
+
+    equipped {
+        INTEGER id       PK
+        INTEGER user_id  FK
+        TEXT    slot
+        TEXT    item_id
+        INTEGER equipped_at
+    }
+
+    daily_tasks {
+        INTEGER id          PK
+        INTEGER user_id     FK
+        TEXT    task_id
+        TEXT    task_type
+        TEXT    description
+        INTEGER target
+        INTEGER progress
+        INTEGER reward_gold
+        INTEGER reward_exp
+        INTEGER completed_at
+        INTEGER date
+    }
+
+    achievements {
+        INTEGER id           PK
+        INTEGER user_id      FK
+        TEXT    achievement_id
+        TEXT    category
+        TEXT    name
+        TEXT    description
+        INTEGER target
+        INTEGER progress
+        INTEGER reward_gold
+        INTEGER reward_diamond
+        INTEGER unlocked_at
+    }
+
+    sign_in {
+        INTEGER id         PK
+        INTEGER user_id    FK
+        INTEGER date
+        INTEGER streak
+        INTEGER reward_gold
+        INTEGER reward_exp
+        INTEGER created_at
+    }
+
+    friends {
+        INTEGER id          PK
+        INTEGER user_id     FK
+        INTEGER friend_id   FK
+        INTEGER affinity
+        INTEGER last_interact_at
+    }
+
+    game_records {
+        INTEGER id         PK
+        INTEGER user_id    FK
+        TEXT    game_id
+        INTEGER score
+        INTEGER duration
+        INTEGER reward_gold
+        INTEGER played_at
+    }
+
+    work_records {
+        INTEGER id          PK
+        INTEGER user_id     FK
+        TEXT    work_id
+        INTEGER started_at
+        INTEGER finished_at
+        INTEGER duration_sec
+        INTEGER reward_gold
+        INTEGER reward_exp
+        INTEGER status
+    }
+
+    event_log {
+        INTEGER id         PK
+        INTEGER user_id    FK
+        TEXT    event_id
+        TEXT    event_type
+        TEXT    payload
+        INTEGER triggered_at
+    }
+
+    users       ||--o{ pet_status    : "has"
+    users       ||--o{ pet_skills    : "owns"
+    users       ||--o{ inventory     : "carries"
+    users       ||--o{ equipped      : "wears"
+    users       ||--o{ daily_tasks   : "has"
+    users       ||--o{ achievements  : "earns"
+    users       ||--o{ sign_in       : "records"
+    users       ||--o{ friends       : "befriends"
+    users       ||--o{ game_records  : "plays"
+    users       ||--o{ work_records  : "works"
+    users       ||--o{ event_log     : "experiences"

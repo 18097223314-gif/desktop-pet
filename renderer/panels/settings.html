@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>爪爪设置</title>
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="../styles/animations.css">
+<link rel="stylesheet" href="../styles/design-system.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 520px; height: 480px;
+  background: transparent;
+  overflow: hidden;
+  font-family: var(--dp-font);
+}
+
+/* ─── 导航图标 ─── */
+.nav-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--dp-text-muted);
+  transition: color var(--dp-transition-fast);
+}
+.dp-nav-item.active .nav-icon,
+.dp-nav-item:hover .nav-icon {
+  color: var(--dp-primary-light);
+}
+
+/* ─── 页面标题 ─── */
+.settings-page h3 {
+  font-size: var(--dp-font-lg);
+  color: var(--dp-text-primary);
+  margin-bottom: var(--dp-space-md);
+  font-weight: 600;
+}
+
+/* ─── 滑块组 ─── */
+.slider-group {
+  display: flex;
+  align-items: center;
+  gap: var(--dp-space-sm);
+}
+.slider-value {
+  font-size: var(--dp-font-sm);
+  color: var(--dp-text-secondary);
+  width: 32px;
+  text-align: right;
+}
+
+/* ─── 头部图标 ─── */
+.header-icon {
+  vertical-align: middle;
+  margin-right: 6px;
+  width: 18px;
+  height: 18px;
+}
+</style>
+</head>
+<body>
+<div class="dp-panel anim-panel-in" id="settings-panel">
+  <!-- 头部 -->
+  <div class="dp-panel-header">
+    <span class="dp-panel-title"><img src="../icons/icon-settings.svg" width="18" height="18" class="header-icon"> 设置</span>
+    <button class="dp-panel-close" id="close-btn" title="关闭 (ESC)">×</button>
+  </div>
+
+  <!-- 左侧导航 + 右侧内容 -->
+  <div class="dp-panel-layout" style="height: calc(100% - 52px);">
+    <!-- 左侧导航 -->
+    <div class="dp-nav" id="settings-nav">
+      <div class="dp-nav-item active" data-page="general">
+        <img src="../icons/icon-paw.svg" width="16" height="16" class="nav-icon">
+        <span>常规</span>
+      </div>
+      <div class="dp-nav-item" data-page="appearance">
+        <img src="../icons/icon-dress.svg" width="16" height="16" class="nav-icon">
+        <span>外观</span>
+      </div>
+      <div class="dp-nav-item" data-page="interaction">
+        <img src="../icons/icon-wave.svg" width="16" height="16" class="nav-icon">
+        <span>互动</span>
+      </div>
+      <div class="dp-nav-item" data-page="reminder">
+        <img src="../icons/icon-energy.svg" width="16" height="16" class="nav-icon">
+        <span>提醒</span>
+      </div>
+    </div>
+
+    <!-- 右侧内容 -->
+    <div class="dp-content" id="settings-content">
+
+      <!-- 常规页 -->
+      <div class="settings-page" id="page-general" style="display:block">
+        <h3>常规设置</h3>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">开机自启</div>
+            <div class="dp-setting-desc">随系统启动自动运行爪爪</div>
+          </div>
+          <label class="dp-toggle">
+            <input type="checkbox" id="opt-auto-launch">
+            <span class="dp-toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">多显示器支持</div>
+            <div class="dp-setting-desc">允许爪爪出现在所有显示器上</div>
+          </div>
+          <label class="dp-toggle">
+            <input type="checkbox" id="opt-multi-display" checked>
+            <span class="dp-toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">最小化到托盘</div>
+            <div class="dp-setting-desc">关闭窗口时最小化而非退出</div>
+          </div>
+          <label class="dp-toggle">
+            <input type="checkbox" id="opt-tray" checked>
+            <span class="dp-toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="dp-divider"></div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">爪爪名字</div>
+          </div>
+          <input class="dp-input" type="text" id="opt-name" maxlength="8" placeholder="输入名字" style="width:120px">
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">性格</div>
+          </div>
+          <select class="dp-input" id="opt-personality" style="width:100px">
+            <option value="playful">活泼</option>
+            <option value="calm">高冷</option>
+            <option value="glutton">贪吃</option>
+            <option value="clingy">黏人</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 外观页 -->
+      <div class="settings-page" id="page-appearance" style="display:none">
+        <h3>外观设置</h3>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">角色大小</div>
+            <div class="dp-setting-desc">调整爪爪的显示尺寸</div>
+          </div>
+          <div class="slider-group">
+            <input type="range" class="dp-slider" id="opt-size" min="60" max="200" value="100">
+            <span id="size-val" class="slider-value">100%</span>
+          </div>
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">窗口透明度</div>
+            <div class="dp-setting-desc">面板和气泡的透明程度</div>
+          </div>
+          <div class="slider-group">
+            <input type="range" class="dp-slider" id="opt-opacity" min="40" max="100" value="95">
+            <span id="opacity-val" class="slider-value">95%</span>
+          </div>
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">动画速度</div>
+            <div class="dp-setting-desc">所有动画的播放速率</div>
+          </div>
+          <div class="slider-group">
+            <input type="range" class="dp-slider" id="opt-speed" min="50" max="200" value="100">
+            <span id="speed-val" class="slider-value">100%</span>
+          </div>
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">始终置顶</div>
+            <div class="dp-setting-desc">爪爪窗口永远在其他窗口上方</div>
+          </div>
+          <label class="dp-toggle">
+            <input type="checkbox" id="opt-always-top" checked>
+            <span class="dp-toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 互动页 -->
+      <div class="settings-page" id="page-interaction" style="display:none">
+        <h3>互动设置</h3>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">点击反应</div>
+            <div class="dp-setting-desc">点击爪爪时有表情和台词反馈</div>
+          </div>
+          <label class="dp-toggle">
+            <input type="checkbox" id="opt-click-react" checked>
+            <span class="dp-toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">自动行走</div>
+            <div class="dp-setting-desc">空闲时爪爪会在屏幕上漫步</div>
+          </div>
+          <label class="dp-toggle">
+            <input type="checkbox" id="opt-auto-walk" checked>
+            <span class="dp-toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">随机台词</div>
+            <div class="dp-setting-desc">空闲时自动弹出对话气泡</div>
+          </div>
+          <label class="dp-toggle">
+            <input type="checkbox" id="opt-auto-talk" checked>
+            <span class="dp-toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">眼睛跟随鼠标</div>
+            <div class="dp-setting-desc">爪爪的眼睛会跟随鼠标移动</div>
+          </div>
+          <label class="dp-toggle">
+            <input type="checkbox" id="opt-eye-track" checked>
+            <span class="dp-toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">行走速度</div>
+            <div class="dp-setting-desc">自动漫步的移动速度</div>
+          </div>
+          <div class="slider-group">
+            <input type="range" class="dp-slider" id="opt-walk-speed" min="30" max="200" value="100">
+            <span id="walk-speed-val" class="slider-value">100%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 提醒页 -->
+      <div class="settings-page" id="page-reminder" style="display:none">
+        <h3>提醒设置</h3>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">饥饿提醒</div>
+            <div class="dp-setting-desc">饥饿值低于阈值时弹出提醒</div>
+          </div>
+          <label class="dp-toggle">
+            <input type="checkbox" id="opt-hunger-alert" checked>
+            <span class="dp-toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">生病提醒</div>
+            <div class="dp-setting-desc">爪爪生病时发出通知</div>
+          </div>
+          <label class="dp-toggle">
+            <input type="checkbox" id="opt-sick-alert" checked>
+            <span class="dp-toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">升级提醒</div>
+            <div class="dp-setting-desc">爪爪升级时弹出庆祝</div>
+          </div>
+          <label class="dp-toggle">
+            <input type="checkbox" id="opt-levelup-alert" checked>
+            <span class="dp-toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">提醒阈值</div>
+            <div class="dp-setting-desc">属性低于此值时触发提醒</div>
+          </div>
+          <div class="slider-group">
+            <input type="range" class="dp-slider" id="opt-threshold" min="10" max="50" value="20">
+            <span id="threshold-val" class="slider-value">20%</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ─── 导航切换 ───
+  const navItems = document.querySelectorAll('.dp-nav-item');
+  const pages = document.querySelectorAll('.settings-page');
+
+  navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      navItems.forEach(n => n.classList.remove('active'));
+      item.classList.add('active');
+      const page = item.dataset.page;
+      pages.forEach(p => p.style.display = 'none');
+      const target = document.getElementById('page-' + page);
+      if (target) {
+        target.style.display = 'block';
+        target.classList.add('anim-panel-in');
+      }
+    });
+  });
+
+  // ─── 滑块数值显示 ───
+  function bindSlider(sliderId, displayId) {
+    const slider = document.getElementById(sliderId);
+    const display = document.getElementById(displayId);
+    if (!slider || !display) return;
+    slider.addEventListener('input', () => {
+      display.textContent = slider.value + '%';
+    });
+  }
+  bindSlider('opt-size', 'size-val');
+  bindSlider('opt-opacity', 'opacity-val');
+  bindSlider('opt-speed', 'speed-val');
+  bindSlider('opt-walk-speed', 'walk-speed-val');
+  bindSlider('opt-threshold', 'threshold-val');
+
+  // ─── 关闭 ───
+  document.getElementById('close-btn').addEventListener('click', () => {
+    saveAndClose();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') saveAndClose();
+  });
+
+  function saveAndClose() {
+    // 收集所有设置
+    const settings = {
+      autoLaunch: document.getElementById('opt-auto-launch').checked,
+      multiDisplay: document.getElementById('opt-multi-display').checked,
+      tray: document.getElementById('opt-tray').checked,
+      name: document.getElementById('opt-name').value.trim(),
+      personality: document.getElementById('opt-personality').value,
+      size: document.getElementById('opt-size').value,
+      opacity: document.getElementById('opt-opacity').value,
+      speed: document.getElementById('opt-speed').value,
+      alwaysTop: document.getElementById('opt-always-top').checked,
+      clickReact: document.getElementById('opt-click-react').checked,
+      autoWalk: document.getElementById('opt-auto-walk').checked,
+      autoTalk: document.getElementById('opt-auto-talk').checked,
+      eyeTrack: document.getElementById('opt-eye-track').checked,
+      walkSpeed: document.getElementById('opt-walk-speed').value,
+      hungerAlert: document.getElementById('opt-hunger-alert').checked,
+      sickAlert: document.getElementById('opt-sick-alert').checked,
+      levelupAlert: document.getElementById('opt-levelup-alert').checked,
+      threshold: document.getElementById('opt-threshold').value,
+    };
+
+    // 保存到 Electron 主进程
+    if (window.petAPI) {
+      window.petAPI.saveSettings(settings);
+    }
+
+    // 动画关闭
+    const panel = document.getElementById('settings-panel');
+    panel.classList.add('dp-panel-exit');
+    setTimeout(() => {
+      if (window.petAPI) window.petAPI.closePanel();
+    }, 200);
+  }
+
+  // ─── 入场动画监听 ───
+  if (window.petAPI) {
+    window.petAPI.getSettings().then(saved => {
+      if (saved && typeof saved === 'object') {
+        // 恢复设置值
+        for (const [key, val] of Object.entries(saved)) {
+          const el = document.getElementById('opt-' + key);
+          if (el) {
+            if (el.type === 'checkbox') el.checked = !!val;
+            else el.value = val;
+          }
+        }
+        // 同步滑块显示
+        ['opt-size','opt-opacity','opt-speed','opt-walk-speed','opt-threshold'].forEach(id => {
+          const slider = document.getElementById(id);
+          const display = document.getElementById(id.replace('opt-', '') + '-val');
+          if (slider && display) display.textContent = slider.value + '%';
+        });
+      }
+    }).catch(() => {});
+
+    window.petAPI.onPanelAnimateIn(() => {
+      document.getElementById('settings-panel').style.animation = 'dp-panel-in 200ms ease-out';
+    });
+
+    window.petAPI.onPanelAnimateOut(() => {
+      document.getElementById('settings-panel').classList.add('dp-panel-exit');
+    });
+  }
+})();
+</script>
+</body>
+</html>
