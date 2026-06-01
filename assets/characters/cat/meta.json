@@ -1,0 +1,40 @@
+{
+  "name": "cat",
+  "displayName": "猫咪",
+  "version": "1.0",
+  "frameSize": {
+    "width": 64,
+    "height": 64
+  },
+  "offset": {
+    "x": 0,
+    "y": 0
+  },
+  "animations": {
+    "idle": {
+      "file": "idle.svg",
+      "frames": 4,
+      "fps": 8
+    },
+    "walk": {
+      "file": "walk.svg",
+      "frames": 6,
+      "fps": 10
+    },
+    "sit": {
+      "file": "sit.svg",
+      "frames": 2,
+      "fps": 4
+    },
+    "sleep": {
+      "file": "sleep.svg",
+      "frames": 3,
+      "fps": 3
+    },
+    "dragged": {
+      "file": "dragged.svg",
+      "frames": 2,
+      "fps": 6
+    }
+  }
+}

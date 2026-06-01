@@ -1,6 +1,7 @@
 // ══════════════════════════════════════════════
 // 主控制器 — 连接引擎与UI
 // 负责事件分发、交互处理、特效、自定义拖拽
+// v2: 动画走 AnimationSystem.setStatus()，表情独立管理
 // ══════════════════════════════════════════════
 
 (function () {
@@ -17,9 +18,12 @@
   const nameTag = document.getElementById('name-tag');
 
   // ─── 初始化子系统 ───
-  AnimationSystem.init(petSvg);
+  AnimationSystem.init(petSvg, petEl);
   BubbleComponent.init(bubble, engine);
   StatusBarComponent.init(engine);
+
+  // ─── 暴露 setExpression 给 AnimationSystem 回调 ───
+  // 在文件末尾通过 window.__petSetExpression 暴露
 
   // ══════════════════════════════════════════════
   // 自定义拖拽（替代 -webkit-app-region: drag）
@@ -92,7 +96,7 @@
     dragStarted = false;
   });
 
-  // ─── 表情切换 (v11: hidden 属性 + 根级别元素) ───
+  // ─── 表情切换 (v12: 只管眼睛+嘴巴+腮红+汗珠，body 动画走 AnimationSystem) ───
   const allEyeIds   = ['eyes-normal', 'eyes-happy', 'eyes-closed', 'eyes-angry', 'eyes-star', 'eyes-surprised', 'eyes-sick'];
   const allMouthIds = ['mouth-normal', 'mouth-happy', 'mouth-angry', 'mouth-surprised', 'mouth-sick'];
 
@@ -114,49 +118,45 @@
     if (blush) blush.setAttribute('opacity', '0');
     const sweat = document.getElementById('sweat-drop');
     if (sweat) sweat.hidden = true;
-    // 清除所有动画类，用 animationClass 管理
-    if (petSvg) petSvg.className.baseVal = '';
-    if (zzz) zzz.classList.remove('show');
-    const tail = document.getElementById('tail-group');
-    if (tail) tail.style.animation = '';
+    // v12: 不再清除 body 动画类（由 AnimationSystem 管理）
 
     switch (mood) {
       case 'happy':
         showEye('eyes-happy'); showMouth('mouth-happy');
         if (blush) blush.setAttribute('opacity', '0.7');
-        if (tail) tail.style.animation = 'tailWag 0.3s ease-in-out infinite';
+        // 尾巴摆动交给 AnimationSystem.setStatus
         break;
       case 'ecstatic':
         showEye('eyes-star'); showMouth('mouth-happy');
         if (blush) blush.setAttribute('opacity', '0.85');
-        if (tail) tail.style.animation = 'tailWag 0.18s ease-in-out infinite';
         break;
       case 'angry':
         showEye('eyes-angry'); showMouth('mouth-angry');
-        if (petSvg) petSvg.className.baseVal = 'anim-shake';
+        // shake 动画通过 playOneShot
+        AnimationSystem.playOneShot('anim-shake', 600, AnimationSystem.STATES.IDLE);
         break;
       case 'surprised':
         showEye('eyes-surprised'); showMouth('mouth-surprised');
-        if (petSvg) petSvg.className.baseVal = 'anim-wiggle';
+        AnimationSystem.playOneShot('anim-wiggle', 1000, AnimationSystem.STATES.IDLE);
         break;
       case 'sleeping':
         showEye('eyes-closed'); showMouth('mouth-normal');
-        if (petSvg) petSvg.className.baseVal = 'anim-sleep';
-        if (zzz) zzz.classList.add('show');
+        // body sleep 动画 + Zzz 由 AnimationSystem.setStatus 管理
         break;
       case 'sick':
         showEye('eyes-sick'); showMouth('mouth-sick');
         if (sweat) sweat.hidden = false;
-        if (petSvg) petSvg.className.baseVal = 'anim-sleep';
         break;
       case 'unhappy':
         showEye('eyes-normal'); showMouth('mouth-angry');
         break;
       default:
         showEye('eyes-normal'); showMouth('mouth-normal');
-        if (petSvg) petSvg.className.baseVal = 'anim-idle';
     }
   }
+
+  // 暴露给 AnimationSystem 回调使用
+  window.__petSetExpression = setExpression;
 
   function showEye(id) {
     allEyeIds.forEach(i => {
@@ -408,11 +408,21 @@
     if (nameTag) nameTag.textContent = '🐾 ' + (data.name || '爪爪');
   });
 
-  // ─── 监听主进程推送的宠物状态 ───
+  // ─── 监听主进程推送的宠物状态（v3: 同步 body 动画 + 心情）───
+  // 后端 getStatus() 返回字段：
+  //   state.state     → 'idle'|'walk'|'sleep'|'sit'|'eat'|'wash'|'play'|... (PET_STATES)
+  //   state.emotion   → 'happy'|'normal'|'sick'|'hungry'|'dirty'|'tired'|'bored'|... (EMOTIONS)
+  //   state.mood      → 数值 0~100（心情条，供 StatusBarComponent 使用）
   if (window.petAPI && window.petAPI.onPetStatePush) {
     window.petAPI.onPetStatePush((state) => {
-      // 更新迷你状态面板（条+数值）
+      // 1. 更新迷你状态面板（条+数值）
       StatusBarComponent.updateMiniBars(state);
+
+      // 2. 同步 body 动画状态（后端权威来源）
+      // 用 state.state 作为行为，state.emotion 作为心情
+      const behavior = state.state || 'idle';   // 'idle'|'walk'|'sleep'|'sit'|...
+      const mood = state.emotion || 'normal';    // 'happy'|'normal'|'sick'|...
+      AnimationSystem.autoState(behavior, mood);
     });
   }
 

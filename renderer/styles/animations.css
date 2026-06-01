@@ -118,3 +118,17 @@
 .anim-glow-pulse {
   animation: glow-pulse 2s ease-in-out infinite;
 }
+ 
+/* ─────────────────────────────────────────────
+   10. 唤醒拉伸 — wakeup 唤醒效果
+   用法：animation-system.js playOneShot('wakeup')
+   ───────────────────────────────────────────── */
+@keyframes anim-stretch {
+  0%   { transform: scaleY(0.7) scaleX(1.15); }
+  40%  { transform: scaleY(1.15) scaleX(0.9); }
+  70%  { transform: scaleY(0.95) scaleX(1.03); }
+  100% { transform: scaleY(1) scaleX(1); }
+}
+.anim-stretch {
+  animation: anim-stretch 600ms var(--dp-transition-spring) forwards;
+}
