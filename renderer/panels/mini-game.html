@@ -16,6 +16,17 @@ body {
   font-family: var(--dp-font);
 }
 
+/* 确保面板 flex 布局，body 可滚动 */
+.dp-panel {
+  display: flex !important;
+  flex-direction: column !important;
+}
+.dp-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 /* 游戏标签 */
 .game-tabs {
   display: flex; gap: 4px; margin-bottom: var(--dp-space-md);

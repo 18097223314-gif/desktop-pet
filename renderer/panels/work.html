@@ -16,6 +16,17 @@ body {
   font-family: var(--dp-font);
 }
 
+/* 确保面板 flex 布局，body 可滚动 */
+.dp-panel {
+  display: flex !important;
+  flex-direction: column !important;
+}
+.dp-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 /* 打工列表 */
 .work-list {
   display: flex;
