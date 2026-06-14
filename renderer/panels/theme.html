@@ -16,8 +16,11 @@ body {
   font-family: var(--dp-font);
 }
 
-/* 确保面板 flex 布局，body 可滚动 */
+/* 面板填满窗口 + flex 布局 */
 .dp-panel {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
 }

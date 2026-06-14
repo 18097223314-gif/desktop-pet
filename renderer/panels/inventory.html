@@ -19,11 +19,14 @@ body {
 .dp-panel {
   width: 560px !important;
   max-height: 460px !important;
-  height: 460px !important;
-  overflow: visible !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
+  /* 面板填满窗口 + flex 布局 */
+  .dp-panel {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
 
 /* ═══ 主布局：左右分栏 ═══ */
 .inv-main {
