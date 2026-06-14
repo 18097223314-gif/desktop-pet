@@ -10,314 +10,550 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  width: 520px; height: 480px;
+  width: 560px; height: 460px;
   background: transparent;
   overflow: hidden;
   font-family: var(--dp-font);
 }
+/* 强制覆盖设计系统限制 */
+.dp-panel {
+  width: 560px !important;
+  max-height: 460px !important;
+  height: 460px !important;
+  overflow: visible !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
 
-/* 金币显示 */
-.inv-header-bar {
+/* ═══ 主布局：左右分栏 ═══ */
+.inv-main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ─── 左侧分类栏 ─── */
+.inv-cats {
+  width: 100px;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.2);
+  border-right: 1px solid var(--dp-border);
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  gap: 2px;
+  overflow-y: auto;
+}
+.cat-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: var(--dp-text-muted);
+  font-size: 13px;
+  font-family: var(--dp-font);
+  cursor: pointer;
+  transition: all 120ms;
+  position: relative;
+}
+.cat-btn:hover {
+  background: rgba(255,255,255,0.05);
+  color: var(--dp-text-secondary);
+}
+.cat-btn.active {
+  background: rgba(124,92,252,0.12);
+  color: var(--dp-primary-light);
+  font-weight: 600;
+}
+.cat-btn .emoji { font-size: 18px; }
+.cat-btn .badge {
+  position: absolute;
+  right: 8px;
+  min-width: 16px; height: 16px;
+  background: var(--dp-accent);
+  color: #fff;
+  font-size: 10px; font-weight: 700;
+  border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4px;
+}
+
+/* ─── 右侧内容区 ─── */
+.inv-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 顶部金币栏 */
+.inv-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--dp-space-sm) var(--dp-space-lg);
-  background: rgba(0,0,0,0.15);
-  border-radius: var(--dp-radius-sm);
-  margin-bottom: var(--dp-space-md);
+  padding: 6px 12px;
+  background: rgba(0,0,0,0.1);
+  border-bottom: 1px solid var(--dp-border);
+  flex-shrink: 0;
+}
+.inv-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dp-text-primary);
 }
 .inv-coins {
-  font-size: 14px; color: var(--dp-text-warning); font-weight: 700;
+  font-size: 13px;
+  color: var(--dp-text-warning);
+  font-weight: 700;
 }
-.inv-coins span { font-size: 18px; }
-.inv-coins-label {
-  font-size: 11px; color: var(--dp-text-muted); margin-left: 4px;
+
+/* 物品列表区（可滚动） */
+.inv-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+}
+.inv-scroll::-webkit-scrollbar { width: 6px; }
+.inv-scroll::-webkit-scrollbar-track { background: transparent; }
+.inv-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
 }
 
 /* 物品网格 */
 .inv-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: var(--dp-space-sm);
+  gap: 8px;
 }
-.inv-item {
-  background: var(--dp-bg-card);
-  border: 2px solid var(--dp-border);
-  border-radius: var(--dp-radius-md);
-  padding: var(--dp-space-sm);
-  cursor: pointer;
-  transition: all var(--dp-transition-fast);
-  text-align: center;
+
+/* ─── 物品卡片 ─── */
+.item-card {
   position: relative;
-  aspect-ratio: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
+  background: var(--dp-bg-card);
+  border: 1px solid var(--dp-border);
+  border-radius: 6px;
+  padding: 8px 4px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 120ms;
 }
-.inv-item:hover {
+.item-card:hover {
   background: var(--dp-bg-card-hover);
-  animation: card-hover 500ms ease-out forwards;
-  box-shadow: var(--dp-shadow-card);
+  border-color: rgba(124,92,252,0.3);
 }
-.inv-item:active { transform: scale(0.95); }
-.inv-item.disabled {
-  opacity: 0.4; cursor: not-allowed;
+.item-card.selected {
+  border-color: var(--dp-primary);
+  background: rgba(124,92,252,0.08);
 }
-.inv-item.disabled:hover {
-  animation: none;
-  transform: none; box-shadow: none;
+.item-card .icon { font-size: 24px; display: block; margin-bottom: 2px; }
+.item-card .name {
+  font-size: 10px;
+  color: var(--dp-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-
-/* 稀有度流光 — 传说 */
-.inv-item.dp-rarity-epic {
-  background-size: 200% 100%;
-  background-image: linear-gradient(90deg, var(--dp-bg-card) 0%, var(--dp-warning) 25%, var(--dp-bg-card) 50%, var(--dp-warning) 75%, var(--dp-bg-card) 100%);
-  animation: shimmer 3s linear infinite;
-  border-color: var(--dp-warning);
-}
-.inv-item.dp-rarity-epic:hover {
-  animation: shimmer 3s linear infinite, card-hover 500ms ease-out forwards;
-}
-.inv-item.dp-rarity-epic .inv-name {
-  color: var(--dp-warning);
-  font-weight: 600;
-}
-
-/* 稀有度 — 稀有 */
-.inv-item.dp-rarity-rare {
-  border-color: var(--dp-info);
-}
-.inv-item.dp-rarity-rare .inv-name {
-  color: var(--dp-info);
-}
-
-.inv-icon { font-size: 28px; line-height: 1; }
-.inv-name { font-size: 10px; color: var(--dp-text-secondary); }
-.inv-cost { font-size: 10px; color: var(--dp-text-warning); font-weight: 600; }
-.inv-qty {
-  position: absolute; top: -4px; right: -4px;
-  min-width: 16px; height: 16px;
-  background: var(--dp-accent); color: #fff;
+.item-card .qty {
+  position: absolute;
+  top: -4px; right: -4px;
+  min-width: 14px; height: 14px;
+  background: var(--dp-accent);
+  color: #fff;
   font-size: 9px; font-weight: 700;
   border-radius: 999px;
   display: flex; align-items: center; justify-content: center;
-  padding: 0 4px;
+  padding: 0 3px;
 }
 
-/* 物品详情浮窗 */
-.inv-tooltip {
-  position: fixed;
-  background: rgba(20,20,20,0.95);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--dp-border-light);
-  border-radius: var(--dp-radius-md);
-  padding: var(--dp-space-md);
-  z-index: 9999;
-  min-width: 160px;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 150ms;
+/* 稀有度边框 */
+.item-card.rarity-uncommon { border-color: #4caf50; }
+.item-card.rarity-rare { border-color: #2196f3; }
+.item-card.rarity-epic { border-color: #9c27b0; }
+.item-card.rarity-legendary { border-color: #ff9800; }
+
+/* 商店物品 */
+.item-card.shop {
+  border-style: dashed;
+  opacity: 0.7;
+}
+.item-card.shop:hover { opacity: 1; }
+
+/* 分隔线 */
+.divider {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; color: var(--dp-text-muted);
+  margin: 4px 0;
+}
+.divider::before, .divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: var(--dp-border);
+}
+
+/* 空状态 */
+.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--dp-text-muted);
+  padding: 30px 0;
   font-size: 12px;
-  color: var(--dp-text-primary);
-  box-shadow: var(--dp-shadow-md);
 }
-.inv-tooltip.show { opacity: 1; }
-.inv-tooltip-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
-.inv-tooltip-desc { color: var(--dp-text-secondary); margin-bottom: 6px; }
-.inv-tooltip-effect { color: var(--dp-text-success); font-size: 11px; }
-.inv-tooltip-cost { color: var(--dp-text-warning); font-size: 11px; }
 
-/* 使用动画 */
-@keyframes invPop {
-  0% { transform: scale(1); }
-  50% { transform: scale(0.85); }
-  100% { transform: scale(1); }
+/* ─── 底部详情栏 ─── */
+.inv-detail {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.15);
+  border-top: 1px solid var(--dp-border);
+  min-height: 56px;
+  flex-shrink: 0;
 }
-.inv-item.used { animation: invPop 0.3s ease; }
+.inv-detail.hidden { display: none; }
+.detail-icon { font-size: 28px; flex-shrink: 0; }
+.detail-info { flex: 1; min-width: 0; }
+.detail-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dp-text-primary);
+}
+.detail-desc {
+  font-size: 11px;
+  color: var(--dp-text-secondary);
+  margin-top: 1px;
+}
+.detail-effect {
+  font-size: 11px;
+  color: var(--dp-text-success);
+  margin-top: 1px;
+}
+.detail-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.btn {
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 1px solid var(--dp-border);
+  background: var(--dp-bg-card);
+  color: var(--dp-text-primary);
+  font-size: 12px;
+  font-family: var(--dp-font);
+  cursor: pointer;
+  transition: all 120ms;
+  min-width: 60px;
+  min-height: 28px;
+  z-index: 10;
+  position: relative;
+}
+.btn:hover {
+  background: var(--dp-bg-card-hover);
+  border-color: var(--dp-primary);
+}
+.btn.primary {
+  background: var(--dp-primary);
+  border-color: var(--dp-primary);
+  color: #fff;
+}
+.btn.primary:hover {
+  background: var(--dp-primary-light);
+}
+.btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  z-index: 9999;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
 </style>
 </head>
 <body>
-<div class="dp-panel anim-panel-in" id="inventory-panel">
+<div class="dp-panel" id="inventory-panel">
   <div class="dp-panel-header">
-    <span class="dp-panel-title"><img src="../icons/icon-bag.svg" width="18" height="18" style="vertical-align:middle;margin-right:6px"> 道具包</span>
+    <span class="dp-panel-title">🎒 道具包</span>
     <button class="dp-panel-close" id="close-btn" title="关闭 (ESC)">&times;</button>
   </div>
 
-  <!-- Tab 分类 -->
-  <div class="dp-tabs" id="inv-tabs">
-    <button class="dp-tab active" data-cat="food"><img src="../icons/icon-food.svg" width="14" height="14" style="vertical-align:middle;margin-right:4px"> 食物</button>
-    <button class="dp-tab" data-cat="toy"><img src="../icons/icon-yarn.svg" width="14" height="14" style="vertical-align:middle;margin-right:4px"> 玩具</button>
-    <button class="dp-tab" data-cat="care"><img src="../icons/icon-bath.svg" width="14" height="14" style="vertical-align:middle;margin-right:4px"> 护理</button>
-    <button class="dp-tab" data-cat="rest"><img src="../icons/icon-sleep.svg" width="14" height="14" style="vertical-align:middle;margin-right:4px"> 休息</button>
-  </div>
+  <div class="inv-main">
+    <!-- 左侧分类 -->
+    <div class="inv-cats" id="cats"></div>
 
-  <div class="dp-panel-body">
-    <!-- 金币栏 -->
-    <div class="inv-header-bar">
-      <div class="inv-coins">
-        <span>&#x1FA99;</span> <span id="coin-display">100</span>
-        <span class="inv-coins-label">金币</span>
+    <!-- 右侧内容 -->
+    <div class="inv-right">
+      <div class="inv-header">
+        <span class="inv-title" id="cat-title">🍖 食物</span>
+        <span class="inv-coins">🪙 <span id="coins">0</span></span>
       </div>
-      <span style="font-size:11px;color:var(--dp-text-muted)">点击物品使用 · 拖拽到角色</span>
+      <div class="inv-scroll">
+        <div class="inv-grid" id="grid"></div>
+      </div>
+      <div class="inv-detail hidden" id="detail">
+        <span class="detail-icon" id="d-icon"></span>
+        <div class="detail-info">
+          <div class="detail-name" id="d-name"></div>
+          <div class="detail-desc" id="d-desc"></div>
+          <div class="detail-effect" id="d-effect"></div>
+        </div>
+        <div class="detail-actions" id="d-actions"></div>
+      </div>
     </div>
-
-    <!-- 物品网格 -->
-    <div class="inv-grid" id="inv-grid"></div>
   </div>
-</div>
-
-<!-- 物品详情浮窗 -->
-<div class="inv-tooltip" id="inv-tooltip">
-  <div class="inv-tooltip-name" id="tip-name"></div>
-  <div class="inv-tooltip-desc" id="tip-desc"></div>
-  <div class="inv-tooltip-effect" id="tip-effect"></div>
-  <div class="inv-tooltip-cost" id="tip-cost"></div>
 </div>
 
 <script>
 (function() {
   'use strict';
+  const api = window.petAPI;
 
-  // ─── 物品数据（与引擎一致） ───
-  const ITEMS = {
-    // 食物
-    DRIED_FISH: { id: 'dried_fish', name: '小鱼干', icon: '🐟', cost: 10, category: 'food', effect: { hunger: '+25', happy: '+5' }, desc: '最受欢迎的零食' },
-    CAT_TREAT:  { id: 'cat_treat',  name: '猫条',   icon: '🧴', cost: 15, category: 'food', effect: { hunger: '+30', happy: '+10' }, desc: '营养丰富的猫条' },
-    STEAK:      { id: 'steak',      name: '牛排',   icon: '🥩', cost: 30, category: 'food', effect: { hunger: '+50', happy: '+15' }, desc: '豪华大牛排' },
-    MILK:       { id: 'milk',       name: '牛奶',   icon: '🥛', cost: 8,  category: 'food', effect: { hunger: '+15', energy: '+10' }, desc: '温温的牛奶' },
-    JUICE:      { id: 'juice',      name: '果汁',   icon: '🧃', cost: 8,  category: 'food', effect: { hunger: '+10', happy: '+5' }, desc: '清爽果汁' },
-    // 玩具
-    YARN_BALL:  { id: 'yarn_ball',  name: '毛线球', icon: '🧶', cost: 12, category: 'toy',  effect: { happy: '+25', energy: '-10' }, desc: '追毛线球超开心' },
-    MOUSE_TOY:  { id: 'mouse_toy',  name: '逗猫棒', icon: '🪶', cost: 15, category: 'toy',  effect: { happy: '+20', energy: '-8' }, desc: '飞来飞去好有趣' },
-    LASER:      { id: 'laser',      name: '激光笔', icon: '🔴', cost: 5,  category: 'toy',  effect: { happy: '+15', energy: '-15' }, desc: '追不到的红点' },
-    // 护理
-    SOAP:       { id: 'soap',       name: '洗澡',   icon: '🛁', cost: 10, category: 'care', effect: { cleanliness: '+40', happy: '-5' }, desc: '猫猫不喜欢洗澡' },
-    BRUSH:      { id: 'brush',      name: '梳毛',   icon: '🪮', cost: 5,  category: 'care', effect: { cleanliness: '+20', happy: '+10' }, desc: '舒服的梳毛' },
-    MEDICINE:   { id: 'medicine',   name: '药',     icon: '💊', cost: 25, category: 'care', effect: { health: '+30' }, desc: '治百病良药' },
-    // 休息
-    SLEEP:      { id: 'sleep',      name: '睡觉',   icon: '😴', cost: 0,  category: 'rest', effect: { energy: '+60' }, desc: '睡一觉恢复精力' },
+  // 分类
+  const CATS = [
+    { id: 'food',     emoji: '🍖', label: '食物' },
+    { id: 'toy',      emoji: '🧸', label: '玩具' },
+    { id: 'medicine', emoji: '💊', label: '药品' },
+    { id: 'special',  emoji: '⭐', label: '特殊' },
+    { id: 'material', emoji: '🔮', label: '材料' },
+  ];
+
+  const TYPE_ICON = {
+    food: '🍖', toy: '🧸', medicine: '💊',
+    special: '✨', material: '💎',
   };
 
-  // 稀有度映射
-  const RARITY = {
-    DRIED_FISH: 'common', CAT_TREAT: 'common', MILK: 'common', JUICE: 'common',
-    LASER: 'common', BRUSH: 'common', SLEEP: 'common',
-    YARN_BALL: 'rare', MOUSE_TOY: 'rare', SOAP: 'rare',
-    STEAK: 'epic', MEDICINE: 'epic',
+  const EFFECT_NAMES = {
+    hunger: '饱食', mood: '心情', stamina: '体力', hygiene: '清洁',
+    heal: '治疗', exp: '经验', gold: '金币',
+    all_stats: '全属性', affection: '好感', special: '特殊',
   };
 
-  let activeCat = 'food';
-  let coins = 100;
+  let cat = 'food';
+  let sel = null;
+  let coins = 0;
+  let owned = [];
+  let shop = [];
 
-  // ─── 渲染物品网格 ───
-  function renderItems() {
-    const grid = document.getElementById('inv-grid');
-    grid.innerHTML = '';
-    const items = Object.values(ITEMS).filter(i => i.category === activeCat);
-
-    items.forEach(item => {
-      const el = document.createElement('div');
-      const canAfford = item.cost <= coins;
-      const rarity = RARITY[Object.keys(ITEMS).find(k => ITEMS[k] === item)] || 'common';
-      el.className = 'inv-item dp-rarity-' + rarity + (!canAfford ? ' disabled' : '');
-      el.innerHTML = `
-        <span class="inv-icon">${item.icon}</span>
-        <span class="inv-name">${item.name}</span>
-        <span class="inv-cost">${item.cost > 0 ? item.cost + '&#x1FA99;' : '免费'}</span>
-      `;
-
-      // 点击使用
-      el.addEventListener('click', () => {
-        if (!canAfford) return;
-        useItem(item, el);
-      });
-
-      // 鼠标悬停显示详情
-      el.addEventListener('mouseenter', (e) => showTooltip(item, e));
-      el.addEventListener('mouseleave', hideTooltip);
-
-      // 拖拽支持
-      el.draggable = true;
-      el.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', item.id);
-      });
-
-      grid.appendChild(el);
+  // 渲染分类栏
+  function renderCats() {
+    const el = document.getElementById('cats');
+    el.innerHTML = '';
+    CATS.forEach(c => {
+      const count = owned.filter(i => i.type === c.id).reduce((s, i) => s + (i.quantity || 0), 0);
+      const btn = document.createElement('button');
+      btn.className = 'cat-btn' + (c.id === cat ? ' active' : '');
+      btn.innerHTML = `<span class="emoji">${c.emoji}</span>${c.label}${count > 0 ? `<span class="badge">${count}</span>` : ''}`;
+      btn.onclick = () => { cat = c.id; sel = null; render(); };
+      el.appendChild(btn);
     });
   }
 
-  // ─── 使用物品 ───
-  function useItem(item, el) {
-    // 扣金币
-    coins -= item.cost;
-    document.getElementById('coin-display').textContent = coins;
+  // 渲染网格
+  function renderGrid() {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
 
-    // 动画
-    el.classList.add('used');
-    setTimeout(() => el.classList.remove('used'), 300);
+    const myItems = owned.filter(i => i.type === cat);
+    const shopItems = shop.filter(i => i.type === cat && !owned.some(b => b.item_id === i.id));
 
-    // 如果金币不够了重新渲染
-    if (item.cost > coins + item.cost) {
-      renderItems();
+    if (myItems.length === 0 && shopItems.length === 0) {
+      grid.innerHTML = '<div class="empty">暂无此类物品</div>';
+      return;
+    }
+
+    myItems.forEach(item => grid.appendChild(makeCard(item, true)));
+
+    if (myItems.length > 0 && shopItems.length > 0) {
+      const div = document.createElement('div');
+      div.className = 'divider';
+      div.textContent = '商店';
+      grid.appendChild(div);
+    }
+
+    shopItems.forEach(item => grid.appendChild(makeCard(item, false)));
+  }
+
+  function makeCard(item, isOwned) {
+    const el = document.createElement('div');
+    const rarity = item.rarity || 'common';
+    let cls = 'item-card rarity-' + rarity;
+    if (!isOwned) cls += ' shop';
+    const id = isOwned ? item.item_id : item.id;
+    if (sel && ((isOwned && sel.item_id === id) || (!isOwned && sel.id === id))) cls += ' selected';
+    el.className = cls;
+
+    const icon = TYPE_ICON[item.type] || '📦';
+    el.innerHTML = `<span class="icon">${icon}</span><span class="name">${item.name}</span>` +
+      (isOwned && item.quantity > 1 ? `<span class="qty">${item.quantity}</span>` : '');
+
+    el.onclick = () => { sel = item; render(); };
+    return el;
+  }
+
+  // 渲染详情
+  function renderDetail() {
+    const panel = document.getElementById('detail');
+    if (!sel) { panel.classList.add('hidden'); return; }
+    panel.classList.remove('hidden');
+
+    const icon = TYPE_ICON[sel.type] || '📦';
+    document.getElementById('d-icon').textContent = icon;
+    document.getElementById('d-name').textContent = sel.name;
+    document.getElementById('d-desc').textContent = sel.description || '';
+
+    let effect = '';
+    if (sel.effect_type && sel.effect_value) {
+      const name = EFFECT_NAMES[sel.effect_type] || sel.effect_type;
+      effect = `${name} ${sel.effect_value > 0 ? '+' : ''}${sel.effect_value}`;
+    } else if (sel.effect_type === 'special') {
+      effect = '✨ 特殊效果';
+    }
+    document.getElementById('d-effect').textContent = effect;
+
+    const actions = document.getElementById('d-actions');
+    actions.innerHTML = '';
+
+    const isOwned = owned.some(b => b.item_id === sel.item_id || b.item_id === sel.id);
+    console.log('[Inv] sel:', sel.name, 'isOwned:', isOwned, 'type:', sel.type);
+    if (isOwned) {
+      if (sel.type !== 'material' && sel.type !== 'clothing') {
+        const btn = document.createElement('button');
+        btn.className = 'btn primary';
+        btn.textContent = '使用';
+        btn.onclick = () => useItem(sel);
+        actions.appendChild(btn);
+      }
+      const qty = document.createElement('span');
+      qty.style.cssText = 'font-size:11px;color:var(--dp-text-muted);align-self:center;';
+      qty.textContent = `持有: ${sel.quantity || 1}`;
+      actions.appendChild(qty);
+    } else {
+      const canAfford = (sel.price_gold || 0) <= coins;
+      const btn = document.createElement('button');
+      btn.className = 'btn primary' + (canAfford ? '' : ' disabled');
+      btn.textContent = sel.price_gold > 0 ? `购买 ${sel.price_gold}G` : (sel.price_diamond > 0 ? `购买 ${sel.price_diamond}D` : '免费');
+      btn.onclick = () => { if (canAfford) buyItem(sel); };
+      actions.appendChild(btn);
     }
   }
 
-  // ─── 物品详情浮窗 ───
-  const tooltip = document.getElementById('inv-tooltip');
-
-  function showTooltip(item, e) {
-    document.getElementById('tip-name').textContent = item.icon + ' ' + item.name;
-    document.getElementById('tip-desc').textContent = item.desc;
-    const effects = Object.entries(item.effect).map(([k, v]) => `${k}: ${v}`).join(' | ');
-    document.getElementById('tip-effect').textContent = effects;
-    document.getElementById('tip-cost').textContent = item.cost > 0 ? `价格: ${item.cost} 金币` : '免费';
-
-    tooltip.style.left = (e.clientX + 12) + 'px';
-    tooltip.style.top = (e.clientY + 12) + 'px';
-    tooltip.classList.add('show');
+  // 使用物品
+  async function useItem(item) {
+    const id = item.item_id || item.id;
+    if (!id) { toast('物品ID异常'); return; }
+    try {
+      const r = await api.economyUseItem(id);
+      if (r && r.success) {
+        toast(`使用了 ${item.name}`);
+        await refresh();
+      } else {
+        toast(r?.error || '使用失败');
+      }
+    } catch (e) { toast('使用出错'); }
   }
 
-  function hideTooltip() {
-    tooltip.classList.remove('show');
+  // 购买物品
+  async function buyItem(item) {
+    try {
+      const r = await api.economyBuy(item.id);
+      if (r && r.success) {
+        toast(`购买成功: ${item.name}`);
+        await refresh();
+      } else {
+        toast(r?.error || '购买失败');
+      }
+    } catch (e) { toast('购买出错'); }
   }
 
-  // ─── Tab 切换 ───
-  document.querySelectorAll('.dp-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.dp-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      activeCat = tab.dataset.cat;
-      renderItems();
+  // 刷新数据
+  async function refresh() {
+    await Promise.all([loadCoins(), loadShop()]);
+    await loadOwned();
+    if (sel) {
+      const id = sel.item_id || sel.id;
+      sel = owned.find(b => b.item_id === id) || shop.find(s => s.id === id) || null;
+    }
+    render();
+  }
+
+  function render() {
+    document.getElementById('cat-title').textContent = CATS.find(c => c.id === cat).emoji + ' ' + CATS.find(c => c.id === cat).label;
+    renderCats();
+    renderGrid();
+    renderDetail();
+  }
+
+  async function loadCoins() {
+    try {
+      const r = await timeout(() => api.economyGetCoins());
+      if (r && r.data) coins = r.data.gold ?? r.data.balance ?? coins;
+      else if (r && typeof r === 'object' && 'gold' in r) coins = r.gold;
+      document.getElementById('coins').textContent = coins;
+    } catch (e) { console.warn('[Inv] coins fail:', e); }
+  }
+
+  async function loadOwned() {
+    try {
+      const r = await timeout(() => api.economyGetInventory());
+      if (Array.isArray(r)) owned = r;
+      else if (r && r.success && Array.isArray(r.data)) owned = r.data;
+    } catch (e) { console.warn('[Inv] owned fail:', e); }
+  }
+
+  async function loadShop() {
+    try {
+      const r = await timeout(() => api.economyGetShop());
+      if (r && r.success && Array.isArray(r.data)) shop = r.data;
+      else if (Array.isArray(r)) shop = r;
+    } catch (e) { console.warn('[Inv] shop fail:', e); }
+  }
+
+  function timeout(fn, ms = 5000) {
+    return new Promise((res, rej) => {
+      const t = setTimeout(() => rej(new Error('超时')), ms);
+      fn().then(r => { clearTimeout(t); res(r); }, e => { clearTimeout(t); rej(e); });
     });
-  });
-
-  // ─── 关闭 ───
-  document.getElementById('close-btn').addEventListener('click', closePanel);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel(); });
-
-  function closePanel() {
-    const panel = document.getElementById('inventory-panel');
-    panel.classList.add('dp-panel-exit');
-    setTimeout(() => {
-      if (window.petAPI) window.petAPI.closePanel();
-    }, 200);
   }
 
-  // ─── 入场动画 ───
-  if (window.petAPI) {
-    window.petAPI.onPanelAnimateIn(() => {
-      document.getElementById('inventory-panel').style.animation = 'dp-panel-in 200ms ease-out';
-    });
-    window.petAPI.onPanelAnimateOut(() => {
-      document.getElementById('inventory-panel').classList.add('dp-panel-exit');
-    });
+  let toastEl = null;
+  function toast(msg) {
+    if (!toastEl) {
+      toastEl = document.createElement('div');
+      toastEl.className = 'toast';
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = msg;
+    toastEl.style.opacity = '1';
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => { toastEl.style.opacity = '0'; }, 2000);
   }
 
-  // ─── 初始化 ───
-  renderItems();
+  // 初始化
+  (async function() {
+    await Promise.all([loadCoins(), loadShop()]);
+    await loadOwned();
+    render();
+  })();
 })();
 </script>
+<script src="../components/panel-common.js"></script>
 </body>
 </html>

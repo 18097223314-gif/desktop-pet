@@ -22,39 +22,39 @@ const STAT_LIMITS = {
 // ─── 属性衰减速率（每分钟衰减量）─────────────
 // 注意：decayTick 每分钟调用一次
 const DECAY_RATES = {
-  HUNGER_PER_TICK: 1,          // 每3分钟 -1（内部计数器控制）
-  HUNGER_TICK_INTERVAL: 3,     // 每3次tick衰减一次
-  HYGIENE_PER_TICK: 1,         // 每5分钟 -1
+  HUNGER_PER_TICK: 1, // 每3分钟 -1（内部计数器控制）
+  HUNGER_TICK_INTERVAL: 3, // 每3次tick衰减一次
+  HYGIENE_PER_TICK: 1, // 每5分钟 -1
   HYGIENE_TICK_INTERVAL: 5,
-  MOOD_PER_TICK: 1,            // 每2分钟 -1
+  MOOD_PER_TICK: 1, // 每2分钟 -1
   MOOD_TICK_INTERVAL: 2,
-  STAMINA_ACTIVE_DRAIN: 2,     // 活动时每分钟 -2
-  STAMINA_REST_GAIN: 2,        // 静止时每分钟 +2
-  STAMINA_SLEEP_GAIN: 5,       // 睡眠时每分钟 +5
+  STAMINA_ACTIVE_DRAIN: 2, // 活动时每分钟 -2
+  STAMINA_REST_GAIN: 2, // 静止时每分钟 +2
+  STAMINA_SLEEP_GAIN: 5, // 睡眠时每分钟 +5
 };
 
 // ─── 情绪阈值 ──────────────────────────────────
 const EMOTION_THRESHOLDS = {
-  HAPPY_HUNGER: 60,            // 饱食 > 60 且 心情 > 60 → happy
+  HAPPY_HUNGER: 60, // 饱食 > 60 且 心情 > 60 → happy
   HAPPY_MOOD: 60,
-  HUNGRY_HUNGER: 30,           // 饱食 < 30 → hungry
-  DIRTY_HYGIENE: 25,           // 清洁 < 25 → dirty
-  SICK_HUNGER: 15,             // 饱食 < 15 且 清洁 < 15 持续10分钟 → sick
+  HUNGRY_HUNGER: 30, // 饱食 < 30 → hungry
+  DIRTY_HYGIENE: 25, // 清洁 < 25 → dirty
+  SICK_HUNGER: 15, // 饱食 < 15 且 清洁 < 15 持续10分钟 → sick
   SICK_HYGIENE: 15,
-  SICK_DURATION_MIN: 10,       // 持续10分钟才判定生病
-  BORED_MOOD: 20,              // 心情 < 20 → bored
-  TIRED_STAMINA: 20,           // 体力 < 20 → tired
+  SICK_DURATION_MIN: 10, // 持续10分钟才判定生病
+  BORED_MOOD: 20, // 心情 < 20 → bored
+  TIRED_STAMINA: 20, // 体力 < 20 → tired
 };
 
 // ─── 行为触发阈值（行为树优先级判断）─────────
 const BEHAVIOR_THRESHOLDS = {
-  NEED_EAT: 20,                // 饱食 < 20 → 走向食盆
-  NEED_WASH: 20,               // 清洁 < 20 → 走向浴室
-  NEED_PLAY: 25,               // 心情 < 25 → 玩耍/撒娇
-  NEED_SLEEP: 15,              // 体力 < 15 → 睡觉
-  AUTO_EAT_GAIN: 40,           // 自动吃饭 +40
-  AUTO_WASH_GAIN: 40,          // 自动洗澡 +40
-  AUTO_PLAY_GAIN: 30,          // 自动玩耍 +30
+  NEED_EAT: 20, // 饱食 < 20 → 走向食盆
+  NEED_WASH: 20, // 清洁 < 20 → 走向浴室
+  NEED_PLAY: 25, // 心情 < 25 → 玩耍/撒娇
+  NEED_SLEEP: 15, // 体力 < 15 → 睡觉
+  AUTO_EAT_GAIN: 40, // 自动吃饭 +40
+  AUTO_WASH_GAIN: 40, // 自动洗澡 +40
+  AUTO_PLAY_GAIN: 30, // 自动玩耍 +30
 };
 
 // ─── 宠物情绪枚举 ──────────────────────────────
@@ -72,31 +72,31 @@ const EMOTIONS = {
 
 // ─── 宠物行为状态枚举 ──────────────────────────
 const PET_STATES = {
-  IDLE: 'idle',              // 待机
-  WALK: 'walk',              // 行走
-  SIT: 'sit',                // 坐下
-  SLEEP: 'sleep',            // 睡觉
-  EAT: 'eat',                // 吃饭
-  WASH: 'wash',              // 洗澡
-  PLAY: 'play',              // 玩耍
-  DANCE: 'dance',            // 跳舞
-  READ: 'read',              // 看书
-  BALL: 'ball',              // 玩球
-  PETTING: 'petting',        // 被抚摸
-  SULKING: 'sulking',        // 撒娇
-  WAKEUP: 'wakeup',          // 起床
-  ATTENTION: 'attention',    // 吸引注意
-  WORK: 'work',              // 打工
-  SICK: 'sick',              // 生病
+  IDLE: 'idle', // 待机
+  WALK: 'walk', // 行走
+  SIT: 'sit', // 坐下
+  SLEEP: 'sleep', // 睡觉
+  EAT: 'eat', // 吃饭
+  WASH: 'wash', // 洗澡
+  PLAY: 'play', // 玩耍
+  DANCE: 'dance', // 跳舞
+  READ: 'read', // 看书
+  BALL: 'ball', // 玩球
+  PETTING: 'petting', // 被抚摸
+  SULKING: 'sulking', // 撒娇
+  WAKEUP: 'wakeup', // 起床
+  ATTENTION: 'attention', // 吸引注意
+  WORK: 'work', // 打工
+  SICK: 'sick', // 生病
 };
 
 // ─── 时间段枚举 ────────────────────────────────
 const TIME_SLOTS = {
-  MORNING: 'morning',        // 07:00-08:00 起床
-  NOON: 'noon',              // 12:00-13:00 午餐
-  ACTIVE: 'active',          // 19:00-21:00 活跃
-  SLEEP: 'sleep',            // 22:00-07:00 睡眠
-  NORMAL: 'normal',          // 其他时段
+  MORNING: 'morning', // 07:00-08:00 起床
+  NOON: 'noon', // 12:00-13:00 午餐
+  ACTIVE: 'active', // 19:00-21:00 活跃
+  SLEEP: 'sleep', // 22:00-07:00 睡眠
+  NORMAL: 'normal', // 其他时段
 };
 
 // ─── IPC 频道名称 ──────────────────────────────
@@ -106,7 +106,8 @@ const IPC_CHANNELS = {
   PET_FEED: 'pet:feed',
   PET_WASH: 'pet:wash',
   PET_STATUS: 'pet:status',
-  PET_STATE_PUSH: 'pet:state-push',   // 主动推送
+  PET_STATE_PUSH: 'pet:state-push', // 主动推送
+  PET_BROADCAST_STATE: 'pet:broadcast-state', // 面板请求广播状态给所有窗口
 
   // 经济系统
   ECONOMY_INVENTORY: 'economy:inventory',
@@ -147,6 +148,8 @@ const IPC_CHANNELS = {
   MINIGAME_START: 'minigame:start',
   MINIGAME_FINISH: 'minigame:finish',
   MINIGAME_RECORDS: 'minigame:records',
+  MINIGAME_RPS: 'minigame:rps',
+  MINIGAME_REWARD: 'minigame:reward',
 
   // 事件推送
   EVENT_TRIGGER: 'event:trigger',
@@ -169,19 +172,34 @@ const IPC_CHANNELS = {
   GET_SYSTEM_TIME: 'get-system-time',
   PANEL_ANIMATE_IN: 'panel-animate-in',
   PANEL_ANIMATE_OUT: 'panel-animate-out',
+
+  // 性能监控
+  PERFORMANCE_REPORT_FPS: 'performance:report-fps',
+  PERFORMANCE_GET_STATUS: 'performance:get-status',
+  PERFORMANCE_DOWNGRADE: 'performance:downgrade',
+  PERFORMANCE_RESTORE: 'performance:restore',
+
+  // ─── 多语言 ────────────────────────────────────
+  I18N_GET_LOCALE: 'i18n:get-locale',
+  I18N_SET_LOCALE: 'i18n:set-locale',
+  I18N_T: 'i18n:t',
+  I18N_GET_SUPPORTED: 'i18n:get-supported',
+
+  // ─── 系统 ────────────────────────────────────
+  SYSTEM_RESET_SAVE: 'system:reset-save',
 };
 
 // ─── 技能列表 ──────────────────────────────────
 const SKILLS = {
-  COOKING: 'cooking',         // 烹饪：喂食效果加成
-  CLEANING: 'cleaning',       // 清洁：洗澡效果加成
+  COOKING: 'cooking', // 烹饪：喂食效果加成
+  CLEANING: 'cleaning', // 清洁：洗澡效果加成
   PERFORMANCE: 'performance', // 表演：娱乐收益加成
-  ATHLETICS: 'athletics',     // 运动：体力消耗减少
-  STUDYING: 'studying',       // 学习：经验获取加成
-  SOCIAL: 'social',           // 社交：好感获取加成
-  GATHERING: 'gathering',     // 采集：打工道具奖励加成
-  CRAFTING: 'crafting',       // 制作：合成成功率加成
-  LUCKY: 'lucky',             // 幸运：随机事件正面概率加成
+  ATHLETICS: 'athletics', // 运动：体力消耗减少
+  STUDYING: 'studying', // 学习：经验获取加成
+  SOCIAL: 'social', // 社交：好感获取加成
+  GATHERING: 'gathering', // 采集：打工道具奖励加成
+  CRAFTING: 'crafting', // 制作：合成成功率加成
+  LUCKY: 'lucky', // 幸运：随机事件正面概率加成
 };
 
 // 技能描述和每级加成
@@ -276,9 +294,9 @@ const AFFECTION_STAGES = [
 
 // ─── 互动冷却时间（毫秒）──────────────────────
 const COOLDOWNS = {
-  PET: 10 * 1000,             // 抚摸冷却 10秒
-  WASH: 5 * 60 * 1000,        // 洗澡冷却 5分钟
-  FEED: 30 * 1000,            // 喂食冷却 30秒
+  PET: 10 * 1000, // 抚摸冷却 10秒
+  WASH: 5 * 60 * 1000, // 洗澡冷却 5分钟
+  FEED: 30 * 1000, // 喂食冷却 30秒
   ATTENTION_IDLE: 30 * 60 * 1000, // 用户30分钟无操作触发注意
 };
 
@@ -319,7 +337,7 @@ const ITEM_RARITIES = {
 const WORK_JOBS = {
   leaflet: {
     name: '发传单',
-    duration: 30 * 60 * 1000,  // 30分钟
+    duration: 1 * 60 * 1000, // 1分钟
     baseReward: 200,
     minLevel: 1,
     staminaCost: 10,
@@ -328,7 +346,7 @@ const WORK_JOBS = {
   },
   waiter: {
     name: '当服务员',
-    duration: 60 * 60 * 1000,  // 1小时
+    duration: 2 * 60 * 1000, // 2分钟
     baseReward: 500,
     minLevel: 2,
     staminaCost: 20,
@@ -337,7 +355,7 @@ const WORK_JOBS = {
   },
   delivery: {
     name: '快递员',
-    duration: 2 * 60 * 60 * 1000,  // 2小时
+    duration: 4 * 60 * 1000, // 4分钟
     baseReward: 800,
     minLevel: 3,
     staminaCost: 30,
@@ -346,7 +364,7 @@ const WORK_JOBS = {
   },
   actor: {
     name: '表演者',
-    duration: 3 * 60 * 60 * 1000,  // 3小时
+    duration: 6 * 60 * 1000, // 6分钟
     baseReward: 1500,
     minLevel: 5,
     staminaCost: 35,
@@ -355,7 +373,7 @@ const WORK_JOBS = {
   },
   explorer: {
     name: '探险家',
-    duration: 4 * 60 * 60 * 1000,  // 4小时
+    duration: 8 * 60 * 1000, // 8分钟
     baseReward: 1000,
     minLevel: 8,
     staminaCost: 40,
@@ -364,7 +382,7 @@ const WORK_JOBS = {
   },
   teacher: {
     name: '家庭教师',
-    duration: 5 * 60 * 60 * 1000,  // 5小时
+    duration: 10 * 60 * 1000, // 10分钟
     baseReward: 2000,
     minLevel: 10,
     staminaCost: 30,
@@ -373,7 +391,7 @@ const WORK_JOBS = {
   },
   researcher: {
     name: '研究员',
-    duration: 6 * 60 * 60 * 1000,  // 6小时
+    duration: 12 * 60 * 1000, // 12分钟
     baseReward: 3000,
     minLevel: 15,
     staminaCost: 35,
@@ -383,7 +401,7 @@ const WORK_JOBS = {
   },
   adventurer: {
     name: '冒险者',
-    duration: 8 * 60 * 60 * 1000,  // 8小时
+    duration: 16 * 60 * 1000, // 16分钟
     baseReward: 5000,
     minLevel: 20,
     staminaCost: 50,
@@ -393,13 +411,14 @@ const WORK_JOBS = {
 };
 
 // ─── 随机行为池 ────────────────────────────────
+// idle 占 60% 权重，确保猫大部分时间处于待机状态，偶尔才切换到其他行为
 const RANDOM_BEHAVIOR_POOL = [
-  { state: PET_STATES.WALK, weight: 25, duration: 5000 },
-  { state: PET_STATES.SIT, weight: 20, duration: 8000 },
-  { state: PET_STATES.IDLE, weight: 20, duration: 6000 },
-  { state: PET_STATES.DANCE, weight: 10, duration: 6000 },
-  { state: PET_STATES.READ, weight: 10, duration: 10000 },
-  { state: PET_STATES.BALL, weight: 15, duration: 7000 },
+  { state: PET_STATES.IDLE, weight: 60, duration: 300000 }, // 300秒 = 5分钟（待机常驻）
+  { state: PET_STATES.WALK, weight: 15, duration: 180000 }, // 180秒 = 3分钟
+  { state: PET_STATES.SIT, weight: 10, duration: 240000 }, // 240秒 = 4分钟
+  { state: PET_STATES.BALL, weight: 5, duration: 200000 }, // 200秒 ≈ 3.3分钟
+  { state: PET_STATES.DANCE, weight: 5, duration: 160000 }, // 160秒 ≈ 2.7分钟
+  { state: PET_STATES.READ, weight: 5, duration: 280000 }, // 280秒 ≈ 4.7分钟
 ];
 
 // ─── 经验等级配置 ──────────────────────────────
@@ -413,10 +432,10 @@ const LEVEL_CONFIG = {
 // 连续签到奖励：里程碑式递增，断签重置
 const SIGNIN_REWARDS_V2 = {
   30: { gold: 2000, diamond: 30, exp: 500, item: 'material_dragon_scale', title: '月度之星' },
-  15: { gold: 1000, diamond: 10, exp: 250, item: 'cloth_crown', title: '坚持不懈' },
-  7:  { gold: 500,  diamond: 5,  exp: 120, item: 'cloth_hat_bear', title: '周周签到' },
-  3:  { gold: 300,  diamond: 2,  exp: 60,  item: 'food_sushi', title: null },
-  1:  { gold: 100,  diamond: 0,  exp: 20,  item: 'food_kibble', title: null },   // 随机食物
+  15: { gold: 1000, diamond: 10, exp: 250, item: 'toy_music_box', title: '坚持不懈' },
+  7: { gold: 500, diamond: 5, exp: 120, item: 'toy_rubiks_cube', title: '周周签到' },
+  3: { gold: 300, diamond: 2, exp: 60, item: 'food_sushi', title: null },
+  1: { gold: 100, diamond: 0, exp: 20, item: 'food_kibble', title: null }, // 随机食物
 };
 
 // ─── 小游戏配置 ────────────────────────────────
@@ -425,32 +444,32 @@ const MINI_GAME_CONFIGS = {
     name: '接食物',
     description: '用键盘左右控制爪爪接住掉落的食物，漏接3个结束',
     emoji: '🍱',
-    dailyLimit: 5,             // 每天5次
-    timeLimit: 60 * 1000,      // 60秒时限
-    moodGain: 8,               // 玩完心情+8
+    dailyLimit: 5, // 每天5次
+    timeLimit: 60 * 1000, // 60秒时限
+    moodGain: 8, // 玩完心情+8
   },
-  'rps': {
+  rps: {
     name: '石头剪刀布',
     description: '和爪爪猜拳，三局两胜制，好感度和幸运影响出拳',
     emoji: '✊',
     dailyLimit: 5,
-    timeLimit: null,           // 无时限（回合制）
+    timeLimit: null, // 无时限（回合制）
     moodGain: 5,
   },
-  'memory': {
+  memory: {
     name: '记忆翻牌',
     description: '4×4网格配对翻牌，步数越少奖励越高',
     emoji: '🃏',
     dailyLimit: 4,
-    timeLimit: 120 * 1000,     // 120秒时限
+    timeLimit: 120 * 1000, // 120秒时限
     moodGain: 6,
   },
-  'rhythm': {
+  rhythm: {
     name: '节奏点击',
     description: '下落式音符节奏游戏，Perfect/Great/Good/Miss判定',
     emoji: '🎵',
     dailyLimit: 4,
-    timeLimit: 90 * 1000,      // 90秒时限
+    timeLimit: 90 * 1000, // 90秒时限
     moodGain: 10,
   },
 };
@@ -459,7 +478,7 @@ const MINI_GAME_CONFIGS = {
 const INVENTORY_CONFIG = {
   DEFAULT_CAPACITY: 30,
   EXPAND_AMOUNT: 5,
-  EXPAND_COST: 500,         // 金币
+  EXPAND_COST: 500, // 金币
   MAX_CAPACITY: 200,
 };
 
@@ -482,7 +501,10 @@ const LEVEL_MILESTONES = {
   5: { title: '初出茅庐', rewards: { gold: 100, diamond: 0, heart_coin: 0, items: [] } },
   10: { title: '小有名气', rewards: { gold: 300, diamond: 10, heart_coin: 0, items: ['rare_toy'] } },
   15: { title: '人气之星', rewards: { gold: 500, diamond: 25, heart_coin: 5, items: ['rare_toy', 'rare_food'] } },
-  20: { title: '传说之选', rewards: { gold: 1000, diamond: 50, heart_coin: 20, items: ['legendary_toy', 'legendary_food'] } },
+  20: {
+    title: '传说之选',
+    rewards: { gold: 1000, diamond: 50, heart_coin: 20, items: ['legendary_toy', 'legendary_food'] },
+  },
 };
 
 // ============ 进化系统 ============
@@ -520,6 +542,39 @@ const EVOLUTION_BRANCHES = {
 
 const EVOLUTION_BRANCH_IDS = ['fire', 'ice', 'thunder'];
 
+// ─── 属性/用户默认值 ──────────────────────────────
+const DEFAULT_STAT_VALUE = 80; // 初始属性默认值（hunger/hygiene/mood/stamina）
+const INITIAL_GOLD = 500; // 新用户初始金币
+const EVOLUTION_REQUIRED_LEVEL = 20; // 进化等级门槛
+
+// ─── 定时器间隔（毫秒）────────────────────────
+const STATUS_PUSH_INTERVAL = 3000; // 状态推送间隔
+const MIN_STAY_DURATION = 60000; // 行为最短驻留时间
+
+// ─── 行为持续时间（毫秒）────────────────────────
+const BEHAVIOR_DURATION_SICK = 6000; // 生病持续
+const BEHAVIOR_DURATION_EAT = 15000; // 自动吃饭
+const BEHAVIOR_DURATION_WASH = 15000; // 自动洗澡
+const BEHAVIOR_DURATION_PLAY = 15000; // 自动玩耍
+const BEHAVIOR_DURATION_SLEEP = 60000; // 自动睡觉
+const BEHAVIOR_DURATION_ATTENTION = 5000; // 吸引注意
+const INTERACTION_DURATION_PETTING = 3000; // 抚摸动画
+const INTERACTION_DURATION_EAT = 3000; // 喂食动画
+const INTERACTION_DURATION_WASH = 4000; // 洗澡动画
+
+// ─── 经济/打工比例 ──────────────────────────────
+const SELL_PRICE_RATIO = 0.3; // 出售回收比例
+const HEAL_STAT_RATIO = 0.3; // 治疗道具恢复比例
+const WORK_CANCEL_PENALTY = 0.2; // 打工取消扣款比例
+const WORK_EXP_RATIO = 0.3; // 打工经验比例
+const WORK_BONUS_ITEM_CHANCE = 0.3; // 打工道具掉落概率
+
+// ─── 技能 ───────────────────────────────────────
+const SKILL_EXP_BASE = 50; // 技能经验基数
+
+// ─── 速率限制 ───────────────────────────────────
+const RATE_LIMIT_WINDOW_MS = 60000; // 速率限制窗口
+
 module.exports = {
   STAT_LIMITS,
   DECAY_RATES,
@@ -547,4 +602,25 @@ module.exports = {
   LEVEL_MILESTONES,
   EVOLUTION_BRANCHES,
   EVOLUTION_BRANCH_IDS,
+  DEFAULT_STAT_VALUE,
+  INITIAL_GOLD,
+  EVOLUTION_REQUIRED_LEVEL,
+  STATUS_PUSH_INTERVAL,
+  MIN_STAY_DURATION,
+  BEHAVIOR_DURATION_SICK,
+  BEHAVIOR_DURATION_EAT,
+  BEHAVIOR_DURATION_WASH,
+  BEHAVIOR_DURATION_PLAY,
+  BEHAVIOR_DURATION_SLEEP,
+  BEHAVIOR_DURATION_ATTENTION,
+  INTERACTION_DURATION_PETTING,
+  INTERACTION_DURATION_EAT,
+  INTERACTION_DURATION_WASH,
+  SELL_PRICE_RATIO,
+  HEAL_STAT_RATIO,
+  WORK_CANCEL_PENALTY,
+  WORK_EXP_RATIO,
+  WORK_BONUS_ITEM_CHANCE,
+  SKILL_EXP_BASE,
+  RATE_LIMIT_WINDOW_MS,
 };

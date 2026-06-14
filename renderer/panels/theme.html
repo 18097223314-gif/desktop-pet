@@ -271,7 +271,7 @@ body {
   }
 
   // ─── 装备主题 ───
-  function equipTheme(theme) {
+  async function equipTheme(theme) {
     THEMES.forEach(t => t.equipped = false);
     theme.equipped = true;
 
@@ -284,6 +284,15 @@ body {
     const banner = document.getElementById('current-theme');
     banner.style.transition = 'all 0.3s ease';
     banner.style.borderColor = theme.color;
+
+    // 持久化到后端
+    if (window.petAPI && window.petAPI.themeSet) {
+      try {
+        await window.petAPI.themeSet(theme.id);
+      } catch (err) {
+        console.error('theme set error:', err);
+      }
+    }
   }
 
   // ─── 主题详情 ───
@@ -342,31 +351,10 @@ body {
     });
   });
 
-  // ─── 关闭 ───
-  document.getElementById('close-btn').addEventListener('click', closePanel);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel(); });
-
-  function closePanel() {
-    const panel = document.getElementById('theme-panel');
-    panel.classList.add('dp-panel-exit');
-    setTimeout(() => {
-      if (window.petAPI) window.petAPI.closePanel();
-    }, 200);
-  }
-
-  // ─── 入场动画 ───
-  if (window.petAPI) {
-    window.petAPI.onPanelAnimateIn(() => {
-      document.getElementById('theme-panel').style.animation = 'dp-panel-in 200ms ease-out';
-    });
-    window.petAPI.onPanelAnimateOut(() => {
-      document.getElementById('theme-panel').classList.add('dp-panel-exit');
-    });
-  }
-
   // ─── 初始化 ───
   renderThemes();
 })();
 </script>
+<script src="../components/panel-common.js"></script>
 </body>
 </html>

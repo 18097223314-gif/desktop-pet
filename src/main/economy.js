@@ -5,9 +5,7 @@
 
 'use strict';
 
-const {
-  STAT_LIMITS, ITEM_EFFECT_TYPES, INVENTORY_CONFIG,
-} = require('./constants');
+const { STAT_LIMITS, ITEM_EFFECT_TYPES, INVENTORY_CONFIG, SELL_PRICE_RATIO, HEAL_STAT_RATIO } = require('./constants');
 
 class Economy {
   /**
@@ -116,7 +114,10 @@ class Economy {
     this.db.run(
       `INSERT INTO inventory (user_id, item_id, quantity) VALUES (?, ?, ?)
        ON CONFLICT(user_id, item_id) DO UPDATE SET quantity = quantity + ?`,
-      userId, itemId, quantity, quantity
+      userId,
+      itemId,
+      quantity,
+      quantity,
     );
 
     this._logTransaction(userId, 'item_add', { itemId, quantity });
@@ -131,24 +132,20 @@ class Economy {
    * @returns {{ success: boolean, message: string }}
    */
   removeItem(userId, itemId, quantity = 1) {
-    const inv = this.db.get(
-      'SELECT * FROM inventory WHERE user_id = ? AND item_id = ?',
-      userId, itemId
-    );
+    const inv = this.db.get('SELECT * FROM inventory WHERE user_id = ? AND item_id = ?', userId, itemId);
 
     if (!inv || inv.quantity < quantity) {
       return { success: false, message: '道具数量不足' };
     }
 
     if (inv.quantity === quantity) {
-      this.db.run(
-        'DELETE FROM inventory WHERE user_id = ? AND item_id = ?',
-        userId, itemId
-      );
+      this.db.run('DELETE FROM inventory WHERE user_id = ? AND item_id = ?', userId, itemId);
     } else {
       this.db.run(
         'UPDATE inventory SET quantity = quantity - ? WHERE user_id = ? AND item_id = ?',
-        quantity, userId, itemId
+        quantity,
+        userId,
+        itemId,
       );
     }
 
@@ -164,10 +161,7 @@ class Economy {
    */
   useItem(userId, itemId) {
     // 检查背包
-    const inv = this.db.get(
-      'SELECT * FROM inventory WHERE user_id = ? AND item_id = ?',
-      userId, itemId
-    );
+    const inv = this.db.get('SELECT * FROM inventory WHERE user_id = ? AND item_id = ?', userId, itemId);
     if (!inv || inv.quantity <= 0) {
       return { success: false, message: '背包中没有该道具', effects: {} };
     }
@@ -178,13 +172,14 @@ class Economy {
       return { success: false, message: '道具信息异常', effects: {} };
     }
 
-    // 非消耗品不能"使用"（如服装需装备）
-    if (item.is_consumable === 0 && item.type !== 'clothing') {
+    // 非消耗品不能"使用"（如服装需装备、材料用于合成）
+    // toy 是非消耗品但可以直接使用（反复获得心情加成，不会消耗）
+    if (['material', 'clothing'].includes(item.type)) {
       return { success: false, message: '该道具无法直接使用', effects: {} };
     }
 
-    // 执行道具效果
-    const effects = this.executeItemEffect(null, item);
+    // 执行道具效果（传入userId，不再硬编码为1）
+    const effects = this.executeItemEffect(userId, item);
 
     // 消耗道具（消耗品）
     if (item.is_consumable === 1) {
@@ -203,10 +198,7 @@ class Economy {
    * @returns {{ success: boolean, message: string, goldReceived: number }}
    */
   sellItem(userId, itemId, quantity = 1) {
-    const inv = this.db.get(
-      'SELECT * FROM inventory WHERE user_id = ? AND item_id = ?',
-      userId, itemId
-    );
+    const inv = this.db.get('SELECT * FROM inventory WHERE user_id = ? AND item_id = ?', userId, itemId);
     if (!inv || inv.quantity < quantity) {
       return { success: false, message: '道具数量不足', goldReceived: 0 };
     }
@@ -217,7 +209,7 @@ class Economy {
     }
 
     // 30%回收价（至少1金币）
-    const sellPrice = Math.max(1, Math.floor(item.price_gold * 0.3 * quantity));
+    const sellPrice = Math.max(1, Math.floor(item.price_gold * SELL_PRICE_RATIO * quantity));
 
     // 移除道具
     this.removeItem(userId, itemId, quantity);
@@ -226,7 +218,11 @@ class Economy {
     this.addGold(userId, sellPrice, `出售${item.name}×${quantity}`);
 
     this._logTransaction(userId, 'item_sell', { itemId, quantity, sellPrice });
-    return { success: true, message: `出售 ${item.name} ×${quantity}，获得 ${sellPrice} 金币`, goldReceived: sellPrice };
+    return {
+      success: true,
+      message: `出售 ${item.name} ×${quantity}，获得 ${sellPrice} 金币`,
+      goldReceived: sellPrice,
+    };
   }
 
   // ══════════════════════════════════════════════
@@ -240,13 +236,14 @@ class Economy {
    */
   getInventory(userId) {
     const rows = this.db.all(
-      `SELECT i.*, it.name, it.type, it.rarity, it.description, it.effect_type,
+      `SELECT i.id AS inv_id, i.user_id, i.item_id, i.quantity, i.acquired_at,
+              it.id AS item_def_id, it.name, it.type, it.rarity, it.description, it.effect_type,
               it.effect_value, it.price_gold, it.is_consumable
        FROM inventory i
        JOIN items it ON i.item_id = it.id
        WHERE i.user_id = ? AND i.quantity > 0
        ORDER BY it.type, it.rarity`,
-      userId
+      userId,
     );
     return rows;
   }
@@ -263,7 +260,9 @@ class Economy {
     }
 
     // 计算费用（每次递增）
-    const expandCount = Math.floor((currentCapacity - INVENTORY_CONFIG.DEFAULT_CAPACITY) / INVENTORY_CONFIG.EXPAND_AMOUNT);
+    const expandCount = Math.floor(
+      (currentCapacity - INVENTORY_CONFIG.DEFAULT_CAPACITY) / INVENTORY_CONFIG.EXPAND_AMOUNT,
+    );
     const cost = INVENTORY_CONFIG.EXPAND_COST * (expandCount + 1);
 
     try {
@@ -334,7 +333,7 @@ class Economy {
        JOIN items it ON i.item_id = it.id
        WHERE i.user_id = ? AND i.quantity > 0
        ORDER BY ${orderBy}`,
-      userId
+      userId,
     );
     return rows;
   }
@@ -345,60 +344,61 @@ class Economy {
 
   /**
    * 执行道具效果
-   * @param {Object|null} petStatus 宠物状态（如有则直接修改）
+   * @param {number} userId 用户ID（用于DB操作，不再硬编码为1）
    * @param {Object} item 道具数据行
-   * @returns {Object} 效果结果
+   * @returns {Object} 效果结果（含对pet_status的变更，由调用方通过petAI.setStatusField写入）
+   *
+   * 修复说明：
+   * - userId 不再硬编码 WHERE id = 1
+   * - 宠物属性变更通过返回值传递给调用方（petAI.setStatusField），
+   *   不再直接修改 petStatus 对象引用（useItem 场景下 petStatus 为 null，修改会丢失）
    */
-  executeItemEffect(petStatus, item) {
+  executeItemEffect(userId, item) {
     const effects = {};
+    const petStatChanges = {}; // 收集宠物属性变更，由调用方写入
     const effectType = item.effect_type;
     const effectValue = item.effect_value || 0;
 
     switch (effectType) {
       case ITEM_EFFECT_TYPES.HUNGER:
-        if (petStatus) petStatus.hunger = Math.min(STAT_LIMITS.MAX, petStatus.hunger + effectValue);
+        petStatChanges.hunger = effectValue;
         effects.hunger = effectValue;
         break;
       case ITEM_EFFECT_TYPES.HYGIENE:
-        if (petStatus) petStatus.hygiene = Math.min(STAT_LIMITS.MAX, petStatus.hygiene + effectValue);
+        petStatChanges.hygiene = effectValue;
         effects.hygiene = effectValue;
         break;
       case ITEM_EFFECT_TYPES.MOOD:
-        if (petStatus) petStatus.mood = Math.min(STAT_LIMITS.MAX, petStatus.mood + effectValue);
+        petStatChanges.mood = effectValue;
         effects.mood = effectValue;
         break;
       case ITEM_EFFECT_TYPES.STAMINA:
-        if (petStatus) petStatus.stamina = Math.min(STAT_LIMITS.MAX, petStatus.stamina + effectValue);
+        petStatChanges.stamina = effectValue;
         effects.stamina = effectValue;
         break;
       case ITEM_EFFECT_TYPES.HEAL:
-        if (petStatus) {
-          petStatus.isSick = false;
-          petStatus.sickSince = null;
-          petStatus.hunger = Math.min(STAT_LIMITS.MAX, petStatus.hunger + effectValue * 0.3);
-          petStatus.hygiene = Math.min(STAT_LIMITS.MAX, petStatus.hygiene + effectValue * 0.3);
-        }
+        petStatChanges.heal = true;
+        petStatChanges.hunger = effectValue * HEAL_STAT_RATIO;
+        petStatChanges.hygiene = effectValue * HEAL_STAT_RATIO;
         effects.heal = effectValue;
         break;
       case ITEM_EFFECT_TYPES.ALL_STATS:
-        if (petStatus) {
-          petStatus.hunger = Math.min(STAT_LIMITS.MAX, petStatus.hunger + effectValue);
-          petStatus.hygiene = Math.min(STAT_LIMITS.MAX, petStatus.hygiene + effectValue);
-          petStatus.mood = Math.min(STAT_LIMITS.MAX, petStatus.mood + effectValue);
-          petStatus.stamina = Math.min(STAT_LIMITS.MAX, petStatus.stamina + effectValue);
-        }
+        petStatChanges.hunger = effectValue;
+        petStatChanges.hygiene = effectValue;
+        petStatChanges.mood = effectValue;
+        petStatChanges.stamina = effectValue;
         effects.allStats = effectValue;
         break;
       case ITEM_EFFECT_TYPES.EXP:
-        this.db.run('UPDATE users SET exp = exp + ? WHERE id = 1', effectValue);
+        this.db.run('UPDATE users SET exp = exp + ? WHERE id = ?', userId, effectValue);
         effects.exp = effectValue;
         break;
       case ITEM_EFFECT_TYPES.GOLD:
-        this.db.run('UPDATE users SET gold = gold + ? WHERE id = 1', effectValue);
+        this.db.run('UPDATE users SET gold = gold + ? WHERE id = ?', userId, effectValue);
         effects.gold = effectValue;
         break;
       case ITEM_EFFECT_TYPES.AFFECTION:
-        this.db.run('UPDATE users SET affection = affection + ? WHERE id = 1', effectValue);
+        this.db.run('UPDATE users SET affection = affection + ? WHERE id = ?', userId, effectValue);
         effects.affection = effectValue;
         break;
       case ITEM_EFFECT_TYPES.SPECIAL:
@@ -409,6 +409,7 @@ class Economy {
         break;
     }
 
+    effects._petStatChanges = petStatChanges;
     return effects;
   }
 
@@ -420,12 +421,12 @@ class Economy {
   getShopItems(type = null) {
     if (type) {
       return this.db.all(
-        'SELECT * FROM items WHERE (price_gold > 0 OR price_diamond > 0) AND type = ? ORDER BY price_gold, price_diamond',
-        type
+        'SELECT * FROM items WHERE (price_gold > 0 OR price_diamond > 0) AND type = ? ORDER BY price_gold DESC, price_diamond DESC, rarity DESC',
+        type,
       );
     }
     return this.db.all(
-      'SELECT * FROM items WHERE price_gold > 0 OR price_diamond > 0 ORDER BY type, price_gold, price_diamond'
+      'SELECT * FROM items WHERE (price_gold > 0 OR price_diamond > 0) ORDER BY type, price_gold DESC, price_diamond DESC, rarity DESC',
     );
   }
 
@@ -455,16 +456,30 @@ class Economy {
       return { success: false, message: '钻石不足' };
     }
 
-    // 扣款
-    if (totalGold > 0) {
-      this.spendGold(userId, totalGold);
-    }
-    if (totalDiamond > 0) {
-      this.db.run('UPDATE users SET diamond = diamond - ? WHERE id = ?', totalDiamond, userId);
-    }
+    // 事务：扣款+加道具必须原子操作，防止扣钱成功道具没到账
+    try {
+      this.db.transaction(() => {
+        // 扣款
+        if (totalGold > 0) {
+          this.spendGold(userId, totalGold);
+        }
+        if (totalDiamond > 0) {
+          this.db.run('UPDATE users SET diamond = diamond - ? WHERE id = ?', totalDiamond, userId);
+        }
 
-    // 添加道具
-    this.addItem(userId, itemId, quantity);
+        // 添加道具
+        this.addItem(userId, itemId, quantity);
+      });
+    } catch (err) {
+      this._logTransaction(userId, 'item_buy_failed', {
+        itemId,
+        quantity,
+        totalGold,
+        totalDiamond,
+        error: err.message,
+      });
+      return { success: false, message: '购买失败，交易已回滚' };
+    }
 
     this._logTransaction(userId, 'item_buy', { itemId, quantity, totalGold, totalDiamond });
     return { success: true, message: `购买成功: ${item.name} ×${quantity}` };
@@ -479,10 +494,7 @@ class Economy {
    * @private
    */
   _getInventoryCount(userId) {
-    const row = this.db.get(
-      'SELECT COUNT(*) as count FROM inventory WHERE user_id = ? AND quantity > 0',
-      userId
-    );
+    const row = this.db.get('SELECT COUNT(*) as count FROM inventory WHERE user_id = ? AND quantity > 0', userId);
     return row ? row.count : 0;
   }
 
@@ -507,7 +519,9 @@ class Economy {
       const eventType = `economy_${type || 'unknown'}`;
       this.db.run(
         'INSERT INTO event_log (user_id, event_type, event_data) VALUES (?, ?, ?)',
-        userId, eventType, JSON.stringify(data)
+        userId,
+        eventType,
+        JSON.stringify(data),
       );
     } catch (err) {
       console.error('[Economy] 日志记录失败:', err.message);

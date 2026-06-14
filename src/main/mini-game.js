@@ -40,7 +40,9 @@ class MiniGameManager {
       const row = this.db.get(
         `SELECT COUNT(*) as cnt FROM game_records
          WHERE user_id = ? AND game_type = ? AND date(played_at) = ?`,
-        userId, gameType, today
+        userId,
+        gameType,
+        today,
       );
       const playedToday = row ? row.cnt : 0;
       const remaining = Math.max(0, config.dailyLimit - playedToday);
@@ -83,7 +85,9 @@ class MiniGameManager {
     const row = this.db.get(
       `SELECT COUNT(*) as cnt FROM game_records
        WHERE user_id = ? AND game_type = ? AND date(played_at) = ?`,
-      userId, gameType, today
+      userId,
+      gameType,
+      today,
     );
     const playedToday = row ? row.cnt : 0;
 
@@ -108,12 +112,16 @@ class MiniGameManager {
 
     // 如果有时间限制，设置超时自动结算
     if (config.timeLimit && config.timeLimit > 0) {
-      this.timer.add(`game_${userId}`, () => {
-        // 超时自动以最低分结算
-        if (this.activeGames.has(userId)) {
-          this.finishGame(userId, gameType, 0);
-        }
-      }, config.timeLimit);
+      this.timer.add(
+        `game_${userId}`,
+        () => {
+          // 超时自动以最低分结算
+          if (this.activeGames.has(userId)) {
+            this.finishGame(userId, gameType, 0);
+          }
+        },
+        config.timeLimit,
+      );
     }
 
     return {
@@ -162,15 +170,15 @@ class MiniGameManager {
     }
 
     // 心情恢复（玩游戏让宠物开心）
-    this.db.run(
-      'UPDATE pet_status SET mood = MIN(100, mood + ?) WHERE pet_id = 1',
-      config.moodGain || 5
-    );
+    this.db.run('UPDATE pet_status SET mood = MIN(100, mood + ?) WHERE pet_id = 1', config.moodGain || 5);
 
     // 记录游戏结果
     this.db.run(
       'INSERT INTO game_records (user_id, game_type, score, reward) VALUES (?, ?, ?, ?)',
-      userId, gameType, score, reward.gold
+      userId,
+      gameType,
+      score,
+      reward.gold,
     );
 
     // 检查是否有道具奖励（10%概率获得随机食物）
@@ -193,8 +201,9 @@ class MiniGameManager {
     try {
       this.db.run(
         'INSERT INTO event_log (user_id, event_type, event_data) VALUES (?, ?, ?)',
-        userId, 'mini_game_finish',
-        JSON.stringify({ gameType, score, reward, multiplier, bonusItem })
+        userId,
+        'mini_game_finish',
+        JSON.stringify({ gameType, score, reward, multiplier, bonusItem }),
       );
     } catch (err) {
       console.error('[MiniGame] 日志记录失败:', err.message);
@@ -218,13 +227,11 @@ class MiniGameManager {
     if (gameType) {
       return this.db.all(
         'SELECT * FROM game_records WHERE user_id = ? AND game_type = ? ORDER BY played_at DESC LIMIT 20',
-        userId, gameType
+        userId,
+        gameType,
       );
     }
-    return this.db.all(
-      'SELECT * FROM game_records WHERE user_id = ? ORDER BY played_at DESC LIMIT 50',
-      userId
-    );
+    return this.db.all('SELECT * FROM game_records WHERE user_id = ? ORDER BY played_at DESC LIMIT 50', userId);
   }
 
   // ══════════════════════════════════════════════
@@ -250,8 +257,8 @@ class MiniGameManager {
       case 'rps': {
         // 石头剪刀布：赢200/平100/输50
         // score: 3=赢, 2=平, 1=输
-        const rpsGold = score >= 3 ? 200 : (score >= 2 ? 100 : 50);
-        const rpsExp = score >= 3 ? 60 : (score >= 2 ? 30 : 15);
+        const rpsGold = score >= 3 ? 200 : score >= 2 ? 100 : 50;
+        const rpsExp = score >= 3 ? 60 : score >= 2 ? 30 : 15;
         return { gold: rpsGold, exp: rpsExp };
       }
 
@@ -292,7 +299,7 @@ class MiniGameManager {
         break;
       case 'rps':
         // 3=赢(1.0), 2=平(0.5), 1=输(0.2)
-        percentage = score >= 3 ? 1.0 : (score >= 2 ? 0.5 : 0.2);
+        percentage = score >= 3 ? 1.0 : score >= 2 ? 0.5 : 0.2;
         break;
       case 'memory':
         // 最优步数8步(4×4配对)，步数越少越好
@@ -316,6 +323,162 @@ class MiniGameManager {
    */
   _getTodayStr() {
     return new Date().toISOString().slice(0, 10);
+  }
+
+  // ══════════════════════════════════════════════
+  // 专用游戏方法
+  // ══════════════════════════════════════════════
+
+  /**
+   * 石头剪刀布（含下注，一个方法管全流程）
+   * @param {number} userId 用户ID
+   * @param {string} playerChoice 'rock' | 'scissors' | 'paper'
+   * @param {number} bet 下注金币
+   * @returns {{ success: boolean, data: Object | null, error: string | null }}
+   */
+  playRps(userId, playerChoice, bet) {
+    const VALID_CHOICES = ['rock', 'scissors', 'paper'];
+    if (!VALID_CHOICES.includes(playerChoice)) {
+      return { success: false, data: null, error: '无效的出拳' };
+    }
+
+    // 下注校验
+    bet = Number(bet);
+    if (!Number.isInteger(bet) || bet < 10) {
+      return { success: false, data: null, error: '下注至少 10 金币' };
+    }
+    if (bet > 1000) {
+      return { success: false, data: null, error: '下注上限 1000 金币' };
+    }
+
+    // 检查金币
+    const balance = this.economy.getBalance(userId);
+    if (balance.gold < bet) {
+      return { success: false, data: null, error: '金币不足' };
+    }
+
+    // 检查每日次数
+    const today = this._getTodayStr();
+    const config = MINI_GAME_CONFIGS.rps;
+    const row = this.db.get(
+      `SELECT COUNT(*) as cnt FROM game_records
+       WHERE user_id = ? AND game_type = 'rps' AND date(played_at) = ?`,
+      userId,
+      today,
+    );
+    if ((row ? row.cnt : 0) >= config.dailyLimit) {
+      return { success: false, data: null, error: '今日石头剪刀布次数已用完' };
+    }
+
+    // CPU 出拳（真随机）
+    const cpuChoice = VALID_CHOICES[Math.floor(Math.random() * 3)];
+
+    // 判定
+    let result; // 'win' | 'lose' | 'draw'
+    if (playerChoice === cpuChoice) {
+      result = 'draw';
+    } else if (
+      (playerChoice === 'rock' && cpuChoice === 'scissors') ||
+      (playerChoice === 'scissors' && cpuChoice === 'paper') ||
+      (playerChoice === 'paper' && cpuChoice === 'rock')
+    ) {
+      result = 'win';
+    } else {
+      result = 'lose';
+    }
+
+    // 结算金币
+    let goldEarned = 0;
+    if (result === 'win') {
+      goldEarned = bet * 2;
+      this.economy.addGold(userId, goldEarned, 'RPS赢');
+    } else if (result === 'lose') {
+      this.economy.spendGold(userId, bet);
+    }
+    // draw: 不扣不奖
+
+    // 经验
+    const expMap = { win: 60, draw: 30, lose: 15 };
+    this.db.run('UPDATE users SET exp = exp + ? WHERE id = ?', expMap[result], userId);
+
+    // 心情
+    const moodMap = { win: 8, draw: 3, lose: -2 };
+    this.db.run('UPDATE pet_status SET mood = MIN(100, MAX(0, mood + ?)) WHERE pet_id = 1', moodMap[result]);
+
+    // 记录游戏记录
+    const scoreForRecord = result === 'win' ? 3 : result === 'draw' ? 2 : 1;
+    this.db.run(
+      'INSERT INTO game_records (user_id, game_type, score, reward) VALUES (?, ?, ?, ?)',
+      userId,
+      'rps',
+      scoreForRecord,
+      result === 'win' ? goldEarned : result === 'lose' ? -bet : 0,
+    );
+
+    return {
+      success: true,
+      data: {
+        playerChoice,
+        cpuChoice,
+        result,
+        bet,
+        goldEarned,
+        balance: this.economy.getBalance(userId),
+      },
+      error: null,
+    };
+  }
+
+  /**
+   * 食物反应结算（纯前端计时，后端只负责发奖励）
+   * @param {number} userId 用户ID
+   * @param {number} hitCount 点到的食物数量
+   * @returns {{ success: boolean, data: Object | null, error: string | null }}
+   */
+  rewardCatchFood(userId, hitCount) {
+    hitCount = Math.max(0, Math.min(5, Number(hitCount) || 0));
+
+    // 检查每日次数
+    const today = this._getTodayStr();
+    const config = MINI_GAME_CONFIGS['catch-food'];
+    const row = this.db.get(
+      `SELECT COUNT(*) as cnt FROM game_records
+       WHERE user_id = ? AND game_type = 'catch-food' AND date(played_at) = ?`,
+      userId,
+      today,
+    );
+    if ((row ? row.cnt : 0) >= config.dailyLimit) {
+      return { success: false, data: null, error: '今日食物反应次数已用完' };
+    }
+
+    // 奖励：每个点到 +15 金币
+    const goldReward = hitCount * 15;
+    if (goldReward > 0) {
+      this.economy.addGold(userId, goldReward, '食物反应');
+    }
+
+    // 经验
+    const expReward = hitCount * 5;
+    this.db.run('UPDATE users SET exp = exp + ? WHERE id = ?', expReward, userId);
+
+    // 心情
+    const moodGain = Math.max(0, hitCount * 2);
+    this.db.run('UPDATE pet_status SET mood = MIN(100, mood + ?) WHERE pet_id = 1', moodGain);
+
+    // 记录
+    this.db.run(
+      'INSERT INTO game_records (user_id, game_type, score, reward) VALUES (?, ?, ?, ?)',
+      userId,
+      'catch-food',
+      hitCount,
+      goldReward,
+    );
+
+    return {
+      success: true,
+      data: { hitCount, goldReward, expReward, balance: this.economy.getBalance(userId) },
+      error: null,
+    };
   }
 }
 

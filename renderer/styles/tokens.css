@@ -142,12 +142,12 @@
   /* ───────────────────────────────────────────
      过渡动画 (6) — 使用 cubic-bezier 缓动
      ─────────────────────────────────────────── */
-  --dp-transition-fast:   150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --dp-transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  --dp-transition-slow:   300ms cubic-bezier(0.4, 0, 0.2, 1);
-  --dp-transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  --dp-transition-smooth: 400ms cubic-bezier(0.25, 0.1, 0.25, 1);
-  --dp-transition-bounce: 600ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --dp-transition-fast:   250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --dp-transition-normal: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --dp-transition-slow:   500ms cubic-bezier(0.4, 0, 0.2, 1);
+  --dp-transition-spring: 700ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dp-transition-smooth: 600ms cubic-bezier(0.25, 0.1, 0.25, 1);
+  --dp-transition-bounce: 800ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
   /* ───────────────────────────────────────────
      Z-index (6) — 层级管理

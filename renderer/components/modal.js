@@ -169,7 +169,9 @@ function createModal({ type, title, message, input, confirmText, cancelText, onR
     okBtn.addEventListener('click', () => {
       box.classList.remove('anim-modal-in');
       box.classList.add('anim-modal-out');
-      setTimeout(() => { removeModal(); }, 200);
+      setTimeout(() => {
+        removeModal();
+      }, 200);
       onResolve();
     });
     actions.appendChild(okBtn);
@@ -182,7 +184,9 @@ function createModal({ type, title, message, input, confirmText, cancelText, onR
       cancelBtn.addEventListener('click', () => {
         box.classList.remove('anim-modal-in');
         box.classList.add('anim-modal-out');
-        setTimeout(() => { removeModal(); }, 200);
+        setTimeout(() => {
+          removeModal();
+        }, 200);
         onResolve(type === 'confirm' ? false : null);
       });
       actions.appendChild(cancelBtn);
@@ -194,7 +198,9 @@ function createModal({ type, title, message, input, confirmText, cancelText, onR
     confirmBtn.addEventListener('click', () => {
       box.classList.remove('anim-modal-in');
       box.classList.add('anim-modal-out');
-      setTimeout(() => { removeModal(); }, 200);
+      setTimeout(() => {
+        removeModal();
+      }, 200);
       if (type === 'prompt') {
         onResolve(inputEl ? inputEl.value : null);
       } else {
@@ -213,7 +219,9 @@ function createModal({ type, title, message, input, confirmText, cancelText, onR
     if (e.target === overlay && currentType === 'alert') {
       box.classList.remove('anim-modal-in');
       box.classList.add('anim-modal-out');
-      setTimeout(() => { removeModal(); }, 200);
+      setTimeout(() => {
+        removeModal();
+      }, 200);
       onResolve();
     }
   });
@@ -224,12 +232,16 @@ function createModal({ type, title, message, input, confirmText, cancelText, onR
       if (currentType === 'alert') {
         box.classList.remove('anim-modal-in');
         box.classList.add('anim-modal-out');
-        setTimeout(() => { removeModal(); }, 200);
+        setTimeout(() => {
+          removeModal();
+        }, 200);
         onResolve();
       } else {
         box.classList.remove('anim-modal-in');
         box.classList.add('anim-modal-out');
-        setTimeout(() => { removeModal(); }, 200);
+        setTimeout(() => {
+          removeModal();
+        }, 200);
         onResolve(false);
       }
       document.removeEventListener('keydown', onKey);
@@ -262,7 +274,7 @@ const Modal = {
         message,
         confirmText,
         cancelText,
-        onResolve: resolve
+        onResolve: resolve,
       });
     });
   },
@@ -275,7 +287,7 @@ const Modal = {
         title,
         message,
         confirmText: okText,
-        onResolve: resolve
+        onResolve: resolve,
       });
     });
   },
@@ -290,7 +302,7 @@ const Modal = {
         input: { defaultValue, placeholder: '请输入...' },
         confirmText,
         cancelText,
-        onResolve: resolve
+        onResolve: resolve,
       });
     });
   },
@@ -299,5 +311,5 @@ const Modal = {
     if (currentResolve) {
       removeModal();
     }
-  }
+  },
 };

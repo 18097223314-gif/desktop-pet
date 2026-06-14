@@ -10,6 +10,7 @@ const BubbleComponent = (() => {
   let hideTimer = null;
   let autoTalkTimer = null;
   let autoTalkEnabled = true;
+  let isShowing = false;
 
   // 台词分组（从引擎获取）
   const phrases = PetEngineModule.PHRASES;
@@ -30,12 +31,12 @@ const BubbleComponent = (() => {
 
       // 根据状态选择台词
       let group = 'idle';
-      if (state.mood === 'happy') group = 'happy';
-      else if (state.mood === 'sick') group = 'sick';
+      if (state.moodType === 'happy') group = 'happy';
+      else if (state.moodType === 'sick') group = 'sick';
       else if (state.hunger < 20) group = 'hungry';
-      else if (state.energy < 20) group = 'tired';
-      else if (state.cleanliness < 20) group = 'dirty';
-      else if (state.happy < 30) group = 'unhappy';
+      else if (state.stamina < 20) group = 'tired';
+      else if (state.hygiene < 20) group = 'dirty';
+      else if (state.mood < 30) group = 'unhappy';
 
       say(group, 2500);
     }, 8000);
@@ -47,7 +48,7 @@ const BubbleComponent = (() => {
     return new Promise(function (resolve) {
       element.textContent = '';
       element.classList.add('anim-typewriter-cursor');
-      var i = 0;
+      let i = 0;
       function type() {
         if (i < text.length) {
           element.textContent += text[i];
@@ -64,25 +65,29 @@ const BubbleComponent = (() => {
 
   function say(group, duration) {
     duration = duration || 2500;
-    if (!bubbleEl) return;
-    var arr = phrases[group] || phrases.idle;
-    var text = arr[Math.floor(Math.random() * arr.length)];
+    if (!bubbleEl || isShowing) return;
+    const arr = phrases[group] || phrases.idle;
+    const text = arr[Math.floor(Math.random() * arr.length)];
+    isShowing = true;
     bubbleEl.classList.add('show');
     clearTimeout(hideTimer);
     typeWriter(bubbleEl, text, 30).then(function () {
       hideTimer = setTimeout(function () {
         bubbleEl.classList.remove('show');
+        isShowing = false;
       }, duration);
     });
   }
 
   function show(text, duration) {
-    if (!bubbleEl) return;
+    if (!bubbleEl || isShowing) return;
+    isShowing = true;
     bubbleEl.classList.add('show');
     clearTimeout(hideTimer);
     typeWriter(bubbleEl, text, 30).then(function () {
       hideTimer = setTimeout(function () {
         bubbleEl.classList.remove('show');
+        isShowing = false;
       }, duration || 3000);
     });
   }
@@ -92,6 +97,7 @@ const BubbleComponent = (() => {
     bubbleEl.classList.remove('show');
     bubbleEl.classList.remove('anim-typewriter-cursor');
     clearTimeout(hideTimer);
+    isShowing = false;
   }
 
   function setAutoTalk(enabled) {

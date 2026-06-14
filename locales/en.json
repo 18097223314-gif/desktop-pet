@@ -1,0 +1,47 @@
+{
+  "menu": {
+    "sleep": "Sleep",
+    "status": "Status",
+    "inventory": "Inventory",
+    "signIn": "Sign In",
+    "work": "Work",
+    "miniGame": "Mini Game",
+    "settings": "Settings",
+    "quit": "Quit",
+    "show": "Show Pet",
+    "hide": "Hide Pet",
+    "settingsSound": "Sound Settings",
+    "settingsDisplay": "Display Settings",
+    "settingsNotify": "Notification Settings",
+    "settingsAbout": "About"
+  },
+  "pet": {
+    "hungry": "I'm hungry...",
+    "tired": "I'm tired, need rest...",
+    "sick": "I don't feel well...",
+    "bored": "I'm so bored...",
+    "happy": "What a great day!",
+    "levelUp": "Level up!"
+  },
+  "work": {
+    "started": "{name} work started, estimated {time} to complete",
+    "finished": "{name} work completed! Earned {gold} gold",
+    "leaflet": "Distribute Flyers",
+    "waiter": "Waiter",
+    "delivery": "Delivery",
+    "actor": "Performer",
+    "explorer": "Explorer",
+    "teacher": "Tutor",
+    "researcher": "Researcher",
+    "adventurer": "Adventurer"
+  },
+  "game": {
+    "rps": "Rock Paper Scissors",
+    "catchFood": "Food Reaction",
+    "memory": "Memory Cards",
+    "rhythm": "Rhythm Tap",
+    "win": "You win!",
+    "lose": "You lose...",
+    "draw": "Draw"
+  }
+}

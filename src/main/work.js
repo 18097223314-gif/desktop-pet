@@ -5,7 +5,7 @@
 
 'use strict';
 
-const { WORK_JOBS } = require('./constants');
+const { WORK_JOBS, WORK_CANCEL_PENALTY, WORK_EXP_RATIO, WORK_BONUS_ITEM_CHANCE } = require('./constants');
 
 class WorkSystem {
   /**
@@ -45,7 +45,10 @@ class WorkSystem {
 
     // 检查用户等级
     const user = this.db.get('SELECT level FROM users WHERE id = ?', userId);
-    if (!user || user.level < jobConfig.minLevel) {
+    if (!user) {
+      throw new Error('用户不存在，请先初始化用户数据');
+    }
+    if (user.level < jobConfig.minLevel) {
       return { success: false, message: `需要 ${jobConfig.minLevel} 级才能做这份工作`, finishTime: null };
     }
 
@@ -65,17 +68,19 @@ class WorkSystem {
     const finishTime = now + jobConfig.duration;
 
     // 扣除体力
-    this.db.run(
-      'UPDATE pet_status SET stamina = MAX(0, stamina - ?) WHERE pet_id = 1',
-      jobConfig.staminaCost
-    );
+    this.db.run('UPDATE pet_status SET stamina = MAX(0, stamina - ?) WHERE pet_id = 1', jobConfig.staminaCost);
 
-    // 创建打工记录（参数化查询，避免 SQL 注入）
-    const durationSeconds = Math.floor(jobConfig.duration / 1000);
+    // 创建打工记录（在 JS 中计算时间，避免 sql.js 参数绑定 bug）
+    const nowStr = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const finishAtStr = new Date(now + jobConfig.duration).toISOString().slice(0, 19).replace('T', ' ');
     const result = this.db.run(
       `INSERT INTO work_records (user_id, work_type, started_at, finish_at, reward, status)
-       VALUES (?, ?, datetime('now'), datetime('now', '+' || ? || ' seconds'), ?, 'working')`,
-      userId, workType, durationSeconds, jobConfig.baseReward
+       VALUES (?, ?, ?, ?, ?, 'working')`,
+      userId,
+      workType,
+      nowStr,
+      finishAtStr,
+      jobConfig.baseReward,
     );
 
     const recordId = result.lastInsertRowid;
@@ -90,15 +95,21 @@ class WorkSystem {
 
     // 设置自动完成定时器
     const timerId = `work_${userId}`;
-    this.timer.add(timerId, () => {
-      this.finishWork(userId);
-    }, jobConfig.duration);
+    this.timer.add(
+      timerId,
+      () => {
+        this.finishWork(userId);
+      },
+      jobConfig.duration,
+    );
 
     // 记录日志
     try {
       this.db.run(
         'INSERT INTO event_log (user_id, event_type, event_data) VALUES (?, ?, ?)',
-        userId, 'work_start', JSON.stringify({ workType, finishTime })
+        userId,
+        'work_start',
+        JSON.stringify({ workType, finishTime }),
       );
     } catch (err) {
       console.error('[Work] 日志记录失败:', err.message);
@@ -123,19 +134,13 @@ class WorkSystem {
     }
 
     const jobConfig = WORK_JOBS[active.workType];
-    const penalty = Math.floor(jobConfig.baseReward * 0.2);
+    const penalty = Math.floor(jobConfig.baseReward * WORK_CANCEL_PENALTY);
 
     // 更新记录状态
-    this.db.run(
-      "UPDATE work_records SET status = 'cancelled' WHERE id = ?",
-      active.recordId
-    );
+    this.db.run("UPDATE work_records SET status = 'cancelled' WHERE id = ?", active.recordId);
 
     // 扣除惩罚金币
-    this.db.run(
-      'UPDATE users SET gold = MAX(0, gold - ?) WHERE id = ?',
-      penalty, userId
-    );
+    this.db.run('UPDATE users SET gold = MAX(0, gold - ?) WHERE id = ?', penalty, userId);
 
     // 清除定时器
     this.timer.destroy(`work_${userId}`);
@@ -147,7 +152,9 @@ class WorkSystem {
     try {
       this.db.run(
         'INSERT INTO event_log (user_id, event_type, event_data) VALUES (?, ?, ?)',
-        userId, 'work_cancel', JSON.stringify({ workType: active.workType, penalty })
+        userId,
+        'work_cancel',
+        JSON.stringify({ workType: active.workType, penalty }),
       );
     } catch (err) {
       console.error('[Work] 取消日志记录失败:', err.message);
@@ -181,14 +188,14 @@ class WorkSystem {
     this.economy.addGold(userId, goldReward, `打工: ${jobConfig.name}`);
 
     // 经验奖励
-    const expReward = Math.floor(jobConfig.baseReward * 0.3);
+    const expReward = Math.floor(jobConfig.baseReward * WORK_EXP_RATIO);
     this.db.run('UPDATE users SET exp = exp + ? WHERE id = ?', expReward, userId);
 
     // 检查 bonus 道具
     let bonusItem = null;
     if (jobConfig.bonusItems && jobConfig.bonusItems.length > 0) {
       // 30%概率获得bonus道具
-      if (Math.random() < 0.3) {
+      if (Math.random() < WORK_BONUS_ITEM_CHANCE) {
         bonusItem = jobConfig.bonusItems[Math.floor(Math.random() * jobConfig.bonusItems.length)];
         this.economy.addItem(userId, bonusItem, 1);
       }
@@ -204,7 +211,8 @@ class WorkSystem {
     // 更新记录状态
     this.db.run(
       "UPDATE work_records SET status = 'completed', finished_at = datetime('now'), reward = ? WHERE id = ?",
-      goldReward, active.recordId
+      goldReward,
+      active.recordId,
     );
 
     // 清除定时器（可能已被触发或手动调用）
@@ -220,7 +228,9 @@ class WorkSystem {
     try {
       this.db.run(
         'INSERT INTO event_log (user_id, event_type, event_data) VALUES (?, ?, ?)',
-        userId, 'work_finish', JSON.stringify({ workType: active.workType, goldReward, expReward, bonusItem, bonusDiamond })
+        userId,
+        'work_finish',
+        JSON.stringify({ workType: active.workType, goldReward, expReward, bonusItem, bonusDiamond }),
       );
     } catch (err) {
       console.error('[Work] 完成日志记录失败:', err.message);
@@ -259,7 +269,7 @@ class WorkSystem {
       workName: jobConfig.name,
       remaining,
       finishTime: active.finishTime,
-      progress: remaining > 0 ? 1 - (remaining / jobConfig.duration) : 1,
+      progress: remaining > 0 ? 1 - remaining / jobConfig.duration : 1,
     };
   }
 
@@ -297,10 +307,7 @@ class WorkSystem {
    * @private
    */
   _getGatheringBonus(userId) {
-    const skill = this.db.get(
-      'SELECT level FROM pet_skills WHERE pet_id = 1 AND skill_type = ?',
-      'gathering'
-    );
+    const skill = this.db.get('SELECT level FROM pet_skills WHERE pet_id = 1 AND skill_type = ?', 'gathering');
     if (!skill) return 1.0;
     return 1.0 + skill.level * 0.05;
   }

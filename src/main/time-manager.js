@@ -49,8 +49,7 @@ class TimeManager {
    */
   getTodayFestival() {
     const now = new Date();
-    const monthDay = String(now.getMonth() + 1).padStart(2, '0') + '-' +
-                     String(now.getDate()).padStart(2, '0');
+    const monthDay = String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
 
     const festival = FESTIVALS[monthDay];
     if (festival) {
@@ -72,16 +71,12 @@ class TimeManager {
       // ─── 春节 ────────────────────────────────
       spring_festival: {
         name: '春节',
-        backgroundEffect: 'firecracker',   // 背景特效：鞭炮
-        particleType: 'confetti',           // 粒子类型：彩纸
-        petAccessory: 'red_envelope',       // 宠物配饰：红包
+        backgroundEffect: 'firecracker', // 背景特效：鞭炮
+        particleType: 'confetti', // 粒子类型：彩纸
+        petAccessory: 'red_envelope', // 宠物配饰：红包
         bonusGold: 500,
         bonusItem: 'special_mystery_box',
-        dialogues: [
-          '新年快乐！爪爪给你拜年啦~',
-          '恭喜发财！红包拿来~',
-          '噼里啪啦，过年啦！',
-        ],
+        dialogues: ['新年快乐！爪爪给你拜年啦~', '恭喜发财！红包拿来~', '噼里啪啦，过年啦！'],
         themeColor: '#FF4444',
         bgMusic: 'festival_spring',
       },
@@ -94,10 +89,7 @@ class TimeManager {
         petAccessory: 'party_hat',
         bonusGold: 200,
         bonusItem: 'food_cake',
-        dialogues: [
-          '新年新气象~',
-          '新的一年，爪爪会继续陪你！',
-        ],
+        dialogues: ['新年新气象~', '新的一年，爪爪会继续陪你！'],
         themeColor: '#FFD700',
         bgMusic: 'festival_newyear',
       },
@@ -110,10 +102,7 @@ class TimeManager {
         petAccessory: 'bow',
         bonusGold: 100,
         bonusItem: 'special_heart_crystal',
-        dialogues: [
-          '情人节快乐！爪爪最喜欢你了~',
-          '送你一颗心~',
-        ],
+        dialogues: ['情人节快乐！爪爪最喜欢你了~', '送你一颗心~'],
         themeColor: '#FF69B4',
         bgMusic: 'festival_love',
       },
@@ -126,10 +115,7 @@ class TimeManager {
         petAccessory: 'work_hat',
         bonusGold: 300,
         bonusItem: 'special_exp_book',
-        dialogues: [
-          '劳动最光荣！休息一下吧~',
-          '辛苦了主人！爪爪给你捶捶背~',
-        ],
+        dialogues: ['劳动最光荣！休息一下吧~', '辛苦了主人！爪爪给你捶捶背~'],
         themeColor: '#4CAF50',
         bgMusic: null,
       },
@@ -142,10 +128,7 @@ class TimeManager {
         petAccessory: 'party_hat',
         bonusGold: 200,
         bonusItem: 'toy_bubble_machine',
-        dialogues: [
-          '儿童节快乐！永远做个小朋友~',
-          '好多好多气球！爪爪好开心！',
-        ],
+        dialogues: ['儿童节快乐！永远做个小朋友~', '好多好多气球！爪爪好开心！'],
         themeColor: '#00BCD4',
         bgMusic: 'festival_fun',
       },
@@ -158,10 +141,7 @@ class TimeManager {
         petAccessory: 'flag',
         bonusGold: 500,
         bonusItem: 'special_gold_medal',
-        dialogues: [
-          '国庆快乐！祝祖国繁荣昌盛~',
-          '长假愉快！爪爪想出去玩~',
-        ],
+        dialogues: ['国庆快乐！祝祖国繁荣昌盛~', '长假愉快！爪爪想出去玩~'],
         themeColor: '#FF0000',
         bgMusic: 'festival_national',
       },
@@ -174,11 +154,7 @@ class TimeManager {
         petAccessory: 'witch_hat',
         bonusGold: 150,
         bonusItem: 'special_mystery_box',
-        dialogues: [
-          '不给糖就捣蛋！',
-          '喵呜~爪爪变成小幽灵啦~',
-          '南瓜灯亮起来了！',
-        ],
+        dialogues: ['不给糖就捣蛋！', '喵呜~爪爪变成小幽灵啦~', '南瓜灯亮起来了！'],
         themeColor: '#FF8C00',
         bgMusic: 'festival_spooky',
       },
@@ -191,11 +167,7 @@ class TimeManager {
         petAccessory: 'santa_hat',
         bonusGold: 300,
         bonusItem: 'special_golden_egg',
-        dialogues: [
-          'Merry Christmas! 圣诞快乐~',
-          '爪爪准备了圣诞礼物哦~',
-          '叮叮当叮叮当~',
-        ],
+        dialogues: ['Merry Christmas! 圣诞快乐~', '爪爪准备了圣诞礼物哦~', '叮叮当叮叮当~'],
         themeColor: '#2E7D32',
         bgMusic: 'festival_christmas',
       },
@@ -208,11 +180,7 @@ class TimeManager {
         petAccessory: 'lantern',
         bonusGold: 200,
         bonusItem: 'food_cake',
-        dialogues: [
-          '中秋快乐！月饼好好吃~',
-          '今晚月亮好圆好漂亮~',
-          '举头望明月，低头吃月饼~',
-        ],
+        dialogues: ['中秋快乐！月饼好好吃~', '今晚月亮好圆好漂亮~', '举头望明月，低头吃月饼~'],
         themeColor: '#FFC107',
         bgMusic: 'festival_mid_autumn',
       },
@@ -225,10 +193,7 @@ class TimeManager {
         petAccessory: 'dragon_boat',
         bonusGold: 200,
         bonusItem: 'food_onigiri',
-        dialogues: [
-          '端午安康！吃粽子啦~',
-          '赛龙舟好热闹！',
-        ],
+        dialogues: ['端午安康！吃粽子啦~', '赛龙舟好热闹！'],
         themeColor: '#795548',
         bgMusic: null,
       },
@@ -241,10 +206,7 @@ class TimeManager {
         petAccessory: 'flower',
         bonusGold: 150,
         bonusItem: 'special_heart_crystal',
-        dialogues: [
-          '七夕快乐！牛郎织女相会啦~',
-          '星星好美~爪爪许个愿~',
-        ],
+        dialogues: ['七夕快乐！牛郎织女相会啦~', '星星好美~爪爪许个愿~'],
         themeColor: '#9C27B0',
         bgMusic: 'festival_romantic',
       },
@@ -257,10 +219,7 @@ class TimeManager {
         petAccessory: 'flower',
         bonusGold: 200,
         bonusItem: 'food_cake',
-        dialogues: [
-          '节日快乐！今天是所有女性的节日~',
-          '送你一朵花~',
-        ],
+        dialogues: ['节日快乐！今天是所有女性的节日~', '送你一朵花~'],
         themeColor: '#E91E63',
         bgMusic: null,
       },
@@ -273,10 +232,7 @@ class TimeManager {
         petAccessory: null,
         bonusGold: 100,
         bonusItem: 'food_onigiri',
-        dialogues: [
-          '清明时节雨纷纷~',
-          '踏青赏花，春天真美~',
-        ],
+        dialogues: ['清明时节雨纷纷~', '踏青赏花，春天真美~'],
         themeColor: '#8BC34A',
         bgMusic: null,
       },
@@ -289,10 +245,7 @@ class TimeManager {
         petAccessory: 'flag',
         bonusGold: 200,
         bonusItem: 'special_exp_book',
-        dialogues: [
-          '向最可爱的人致敬！',
-          '建军节快乐~',
-        ],
+        dialogues: ['向最可爱的人致敬！', '建军节快乐~'],
         themeColor: '#D32F2F',
         bgMusic: null,
       },
@@ -305,10 +258,7 @@ class TimeManager {
         petAccessory: null,
         bonusGold: 150,
         bonusItem: 'food_cake',
-        dialogues: [
-          '重阳登高，遥寄思念~',
-          '九九重阳，长长久久~',
-        ],
+        dialogues: ['重阳登高，遥寄思念~', '九九重阳，长长久久~'],
         themeColor: '#FF8F00',
         bgMusic: null,
       },
@@ -321,10 +271,7 @@ class TimeManager {
         petAccessory: 'party_hat',
         bonusGold: 300,
         bonusItem: 'special_star_fragment',
-        dialogues: [
-          '倒数3、2、1！新年来啦！',
-          '跨年快乐！明年也要一起哦~',
-        ],
+        dialogues: ['倒数3、2、1！新年来啦！', '跨年快乐！明年也要一起哦~'],
         themeColor: '#E91E63',
         bgMusic: 'festival_countdown',
       },
@@ -357,8 +304,7 @@ class TimeManager {
     const today = new Date();
     const birth = new Date(birthDate);
 
-    return today.getMonth() === birth.getMonth() &&
-           today.getDate() === birth.getDate();
+    return today.getMonth() === birth.getMonth() && today.getDate() === birth.getDate();
   }
 
   /**
@@ -370,7 +316,8 @@ class TimeManager {
     const year = new Date().getFullYear();
     const row = this.db.get(
       'SELECT rewards_claimed FROM festival_records WHERE user_id = 1 AND festival_type = ? AND year = ?',
-      festivalType, year
+      festivalType,
+      year,
     );
     return row ? row.rewards_claimed === 1 : false;
   }
@@ -385,7 +332,8 @@ class TimeManager {
       `INSERT INTO festival_records (user_id, festival_type, year, rewards_claimed)
        VALUES (1, ?, ?, 1)
        ON CONFLICT(user_id, festival_type, year) DO UPDATE SET rewards_claimed = 1`,
-      festivalType, year
+      festivalType,
+      year,
     );
   }
 

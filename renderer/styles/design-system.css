@@ -111,7 +111,10 @@
   justify-content: space-between;
   padding: var(--dp-space-lg) var(--dp-space-lg) var(--dp-space-md);
   border-bottom: 1px solid var(--dp-border);
+  cursor: grab;
+  user-select: none;
 }
+.dp-panel-header:active { cursor: grabbing; }
 
 .dp-panel-title {
   font-size: var(--dp-font-lg);
@@ -131,6 +134,7 @@
   align-items: center;
   justify-content: center;
   transition: all var(--dp-transition-fast);
+  -webkit-app-region: no-drag;
 }
 .dp-panel-close:hover {
   background: rgba(255, 85, 85, 0.15);

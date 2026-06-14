@@ -104,7 +104,7 @@
   transition: transform var(--dp-transition-spring);
 }
 .anim-card-hover:hover {
-  animation: card-hover 500ms ease-out forwards;
+  animation: card-hover 800ms ease-out forwards;
 }
 
 /* ─────────────────────────────────────────────

@@ -1,0 +1,47 @@
+{
+  "menu": {
+    "sleep": "잠자기",
+    "status": "상태",
+    "inventory": "인벤토리",
+    "signIn": "출석",
+    "work": "일하기",
+    "miniGame": "미니게임",
+    "settings": "설정",
+    "quit": "종료",
+    "show": "펫 표시",
+    "hide": "펫 숨기기",
+    "settingsSound": "소리 설정",
+    "settingsDisplay": "화면 설정",
+    "settingsNotify": "알림 설정",
+    "settingsAbout": "정보"
+  },
+  "pet": {
+    "hungry": "배고파...",
+    "tired": "피곤해, 쉬고 싶어...",
+    "sick": "몸이 안 좋아...",
+    "bored": "심심해...",
+    "happy": "오늘 기분 좋아!",
+    "levelUp": "레벨 업!"
+  },
+  "work": {
+    "started": "{name} 작업이 시작되었습니다, {time} 후 완료 예정",
+    "finished": "{name} 작업 완료! {gold} 골드 획득",
+    "leaflet": "전단지 배포",
+    "waiter": "웨이터",
+    "delivery": "배달",
+    "actor": "퍼포머",
+    "explorer": "탐험가",
+    "teacher": "과외 선생님",
+    "researcher": "연구원",
+    "adventurer": "모험가"
+  },
+  "game": {
+    "rps": "가위바위보",
+    "catchFood": "푸드 리액션",
+    "memory": "메모리 카드",
+    "rhythm": "리듬 탭",
+    "win": "승리!",
+    "lose": "패배...",
+    "draw": "무승부"
+  }
+}

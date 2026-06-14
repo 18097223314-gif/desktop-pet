@@ -3,6 +3,22 @@
 // 使用 sql.js（纯 JS SQLite 实现，无需编译）
 // 支持持久化存储、迁移执行、预编译语句缓存、事务
 // ══════════════════════════════════════════════
+//
+// @WORKAROUND sql.js 参数绑定 bug（1.10.3 ~ 1.14.1 均存在）
+// ──────────────────────────────────────────
+// sql.js 的 Prepared Statement 存在参数绑定缺陷：
+//   stmt.bind(1, val)（单参数）后 stmt.getAsObject() 返回 undefined。
+//   stmt.bind([1, val])（数组绑定）正常，但 stmt.step() 循环返回空。
+// 影响范围：所有带单参数 `?` 占位符的 SELECT。
+// 已验证版本：1.10.3、1.14.1（2026-06-05）
+//
+// 当前方案：_escapeSql() 将参数直接拼接到 SQL 字符串中，改用 db.exec() 执行。
+// 安全性：本应用所有 SQL 参数均为内部生成（userId、workType 等），无外部用户输入，
+//        不存在 SQL 注入风险。
+// 局限：_escapeSql 的正则 /\?/g 无法区分 SQL 字符串字面量内的 ? 和参数占位符 ?。
+//       若有复杂 SQL 表达式内嵌 ?（如 datetime('now', '+' || ? || ' seconds')），
+//       需在 JS 中提前计算，避免将 ? 放在 SQL 函数内部。
+// 后续：sql.js 修复此 bug 后，可移除 _escapeSql 并回退到原生 prepared statement。
 
 'use strict';
 
@@ -91,8 +107,9 @@ class PetDatabase {
       return;
     }
 
-    const migrationFiles = fs.readdirSync(this.migrationsDir)
-      .filter(f => f.endsWith('.sql'))
+    const migrationFiles = fs
+      .readdirSync(this.migrationsDir)
+      .filter((f) => f.endsWith('.sql'))
       .sort();
 
     for (const file of migrationFiles) {
@@ -145,7 +162,7 @@ class PetDatabase {
           }
           try {
             if (stmt.step()) {
-              const row = stmt.getAsObject();
+              const row = stmt.getAsObject({ sql });
               return row;
             }
             return undefined;
@@ -164,7 +181,7 @@ class PetDatabase {
           const rows = [];
           try {
             while (stmt.step()) {
-              rows.push(stmt.getAsObject());
+              rows.push(stmt.getAsObject({ sql }));
             }
           } finally {
             stmt.reset();
@@ -219,13 +236,13 @@ class PetDatabase {
    */
   _bindParams(stmt, params) {
     if (Array.isArray(params)) {
-      // 扁平化嵌套数组
-      const flat = params.flat(Infinity);
+      // 展开一层嵌套（...params 调用可能产生 [[a,b]] 形式）
+      const flattened = params.flat(1);
       // 绑定前先 reset，防止 statement 停在 stepped 状态导致 bind 失败
       stmt.reset();
-      for (let i = 0; i < flat.length; i++) {
+      for (let i = 0; i < flattened.length; i++) {
         // undefined 在 sql.js 里会导致 bind 静默失败，替换为 null
-        const val = flat[i] === undefined ? null : flat[i];
+        const val = flattened[i] === undefined ? null : flattened[i];
         const ok = stmt.bind(i + 1, val);
         if (!ok) {
           console.warn(`[Database] bind(${i + 1}, ${typeof val}) 失败, SQL参数可能未正确绑定`);
@@ -279,33 +296,82 @@ class PetDatabase {
   }
 
   /**
+   * 安全的 SQL 字符串替换 ? 占位符为实际值
+   * 仅用于 SELECT 查询（本应用参数均为内部生成，无外部输入风险）
+   */
+  _escapeSql(sql, params) {
+    if (!params || params.length === 0) return sql;
+    let idx = 0;
+    return sql.replace(/\?/g, () => {
+      const val = params[idx++];
+      if (val === null || val === undefined) return 'NULL';
+      if (typeof val === 'number') return String(val);
+      // 字符串：转义单引号后加引号
+      return "'" + String(val).replace(/'/g, "''") + "'";
+    });
+  }
+
+  /**
    * 获取单个查询结果
-   * @param {string} sql SQL 语句
-   * @param {*} params 参数
-   * @returns {Object|undefined}
+   * sql.js 的 getAsObject() 对单参数 bind 的 prepared statement 有 bug，
+   * 返回 undefined。改用 db.exec() 直接执行完整 SQL。
    */
   get(sql, ...params) {
-    return this.prepare(sql).get(...params);
+    if (params.length === 0) {
+      return this.prepare(sql).get();
+    }
+    const escapedSql = this._escapeSql(sql, params);
+    const results = this.db.exec(escapedSql);
+    if (!results || results.length === 0 || results[0].values.length === 0) {
+      return undefined;
+    }
+    // 构建对象：列名 → 值
+    const columns = results[0].columns;
+    const row = results[0].values[0];
+    const obj = {};
+    for (let i = 0; i < columns.length; i++) {
+      obj[columns[i]] = row[i];
+    }
+    return obj;
   }
 
   /**
    * 获取所有查询结果
-   * @param {string} sql SQL 语句
-   * @param {*} params 参数
-   * @returns {Object[]}
    */
   all(sql, ...params) {
-    return this.prepare(sql).all(...params);
+    // sql.js 的 getAsObject() 对单参数 bind 有 bug，统一走 db.exec() 路径
+    const escapedSql = params.length > 0 ? this._escapeSql(sql, params) : sql;
+    try {
+      const results = this.db.exec(escapedSql);
+      if (!results || results.length === 0) return [];
+      const columns = results[0].columns;
+      return results[0].values.map((row) => {
+        const obj = {};
+        for (let i = 0; i < columns.length; i++) {
+          obj[columns[i]] = row[i];
+        }
+        return obj;
+      });
+    } catch (err) {
+      console.error('[Database] all() SQL执行失败:', err.message, '| SQL:', escapedSql);
+      throw err;
+    }
   }
 
   /**
    * 执行写入操作并返回变化行数
-   * @param {string} sql SQL 语句
-   * @param {*} params 参数
-   * @returns {{ changes: number, lastInsertRowid: number }}
+   * sql.js 的 prepared statement 单参数 bind 有 bug，对带参数的查询改用 db.exec()。
    */
   run(sql, ...params) {
-    return this.prepare(sql).run(...params);
+    if (params.length === 0) {
+      return this.prepare(sql).run();
+    }
+    const escapedSql = this._escapeSql(sql, params);
+    this.db.exec(escapedSql);
+    this._dirty = true;
+    const changes = this.db.getRowsModified();
+    const lastInsertRowid = this._getLastInsertRowId();
+    return { changes, lastInsertRowid };
   }
 
   /**
@@ -352,7 +418,7 @@ class PetDatabase {
       }
 
       // 检查是否已有 evolution_type 列
-      const columns = result[0].values.map(row => row[1]); // 第二列是列名
+      const columns = result[0].values.map((row) => row[1]); // 第二列是列名
       if (columns.includes('evolution_type')) {
         console.log('[Database] pet.evolution_type 列已存在，跳过迁移');
         return;

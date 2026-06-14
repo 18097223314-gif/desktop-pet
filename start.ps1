@@ -8,4 +8,4 @@ if (-not (Test-Path $electronExe)) {
     Write-Host "[ERROR] electron.exe not found: $electronExe"
     exit 1
 }
-Start-Process $electronExe -ArgumentList '.' -WorkingDirectory $scriptDir
+Start-Process $electronExe -ArgumentList '. --dev' -WorkingDirectory $scriptDir

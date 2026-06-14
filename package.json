@@ -6,15 +6,57 @@
   "scripts": {
     "start": "start.bat",
     "dev": "start.bat --dev",
-    "build": "electron-builder"
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "test": "node test/test-runner.js",
+    "lint": "eslint src/ renderer/components/ renderer/pet-controller.js renderer/preload.js --no-error-on-unmatched-pattern",
+    "lint:fix": "eslint src/ renderer/components/ renderer/pet-controller.js renderer/preload.js --fix --no-error-on-unmatched-pattern",
+    "format": "prettier --write \"src/**/*.js\" \"renderer/components/**/*.js\" \"renderer/pet-controller.js\" \"renderer/preload.js\"",
+    "format:check": "prettier --check \"src/**/*.js\" \"renderer/components/**/*.js\" \"renderer/pet-controller.js\" \"renderer/preload.js\""
   },
-  "keywords": ["desktop-pet", "electron", "shimeji"],
+  "keywords": [
+    "desktop-pet",
+    "electron",
+    "shimeji"
+  ],
   "author": "桑总",
   "license": "MIT",
   "dependencies": {
-    "sql.js": "^1.10.3"
+    "pngjs": "^7.0.0",
+    "sql.js": "^1.14.1"
   },
   "devDependencies": {
-    "electron": "^28.0.0"
+    "electron": "^28.0.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.0"
+  },
+  "build": {
+    "appId": "com.zhuazhua.desktop-pet",
+    "productName": "爪爪桌宠",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "renderer/**/*",
+      "assets/**/*",
+      "data/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
   }
 }

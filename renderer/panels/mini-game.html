@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>爪爪小游戏</title>
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="../styles/animations.css">
+<link rel="stylesheet" href="../styles/design-system.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 520px; height: 480px;
+  background: transparent;
+  overflow: hidden;
+  font-family: var(--dp-font);
+}
+
+/* 游戏标签 */
+.game-tabs {
+  display: flex; gap: 4px; margin-bottom: var(--dp-space-md);
+}
+.game-tab {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: var(--dp-radius-sm);
+  background: transparent;
+  border: 1px solid var(--dp-border);
+  color: var(--dp-text-muted);
+  font-size: 12px; cursor: pointer;
+  transition: all var(--dp-transition-fast);
+  font-family: var(--dp-font);
+  text-align: center;
+}
+.game-tab:hover { color: var(--dp-text-secondary); }
+.game-tab.active {
+  background: rgba(124,92,252,0.15);
+  color: var(--dp-primary-light);
+  border-color: var(--dp-primary);
+}
+
+/* 游戏区域 */
+.game-area { display: none; }
+.game-area.active { display: block; }
+
+/* ═══ RPS ═══ */
+.rps-container {
+  text-align: center; padding-top: 12px;
+}
+.rps-bet {
+  margin-bottom: var(--dp-space-lg);
+}
+.rps-bet label {
+  font-size: 12px; color: var(--dp-text-secondary);
+}
+.rps-bet-input {
+  width: 100px; padding: 6px 10px;
+  border: 1px solid var(--dp-border);
+  border-radius: var(--dp-radius-sm);
+  background: var(--dp-bg-card);
+  color: var(--dp-text-primary);
+  font-size: 14px; text-align: center;
+  font-family: var(--dp-font);
+  margin-left: 8px;
+}
+.rps-bet-input:focus {
+  outline: none;
+  border-color: var(--dp-primary);
+}
+.rps-choices {
+  display: flex; justify-content: center; gap: 20px;
+  margin: 24px 0;
+}
+.rps-choice {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: var(--dp-bg-card);
+  border: 2px solid var(--dp-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; cursor: pointer;
+  transition: all var(--dp-transition-fast);
+}
+.rps-choice:hover {
+  transform: scale(1.1);
+  border-color: var(--dp-primary);
+  box-shadow: 0 4px 16px rgba(124,92,252,0.3);
+}
+.rps-choice.disabled { opacity: 0.4; pointer-events: none; }
+.rps-result {
+  font-size: 16px; font-weight: 600;
+  min-height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--dp-radius-md);
+  background: var(--dp-bg-card);
+  margin-top: var(--dp-space-md);
+  transition: all 0.3s;
+}
+.rps-result.win { color: var(--dp-text-success); }
+.rps-result.lose { color: #ff4757; }
+.rps-result.draw { color: var(--dp-text-muted); }
+.rps-vs {
+  display: flex; justify-content: center; align-items: center; gap: 24px;
+  margin: 16px 0; min-height: 60px;
+}
+.rps-vs-item {
+  text-align: center;
+}
+.rps-vs-item .emoji { font-size: 40px; }
+.rps-vs-item .label { font-size: 11px; color: var(--dp-text-muted); margin-top: 4px; }
+.rps-vs-divider {
+  font-size: 20px; font-weight: 700; color: var(--dp-text-muted);
+}
+
+/* ═══ 食物反应 ═══ */
+.food-container {
+  position: relative;
+  width: 100%; height: 380px;
+  background: var(--dp-bg-card);
+  border-radius: var(--dp-radius-md);
+  overflow: hidden;
+  cursor: crosshair;
+}
+.food-container .food-item {
+  position: absolute;
+  font-size: 32px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.1s;
+  animation: food-appear 0.3s ease-out;
+}
+.food-container .food-item:hover {
+  transform: scale(1.2);
+}
+@keyframes food-appear {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.food-hud {
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; justify-content: space-between; padding: 8px 12px;
+  font-size: 12px; color: var(--dp-text-secondary);
+  background: rgba(0,0,0,0.2); z-index: 1;
+}
+.food-start-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.4); z-index: 2;
+  cursor: pointer;
+}
+.food-start-overlay span {
+  font-size: 18px; color: #fff; font-weight: 600;
+}
+.food-start-overlay small {
+  font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 8px;
+}
+
+/* ═══ 记忆翻牌 ═══ */
+.memory-container {
+  text-align: center; padding-top: 4px;
+}
+.memory-hud {
+  display: flex; justify-content: center; gap: 32px;
+  margin-bottom: var(--dp-space-md);
+  font-size: 13px; color: var(--dp-text-secondary);
+}
+.memory-hud span { font-weight: 600; color: var(--dp-text-primary); }
+.memory-board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  max-width: 320px;
+  margin: 0 auto 12px;
+}
+.memory-card {
+  aspect-ratio: 1;
+  border-radius: var(--dp-radius-sm);
+  background: var(--dp-bg-card);
+  border: 2px solid var(--dp-border);
+  cursor: pointer;
+  font-size: 28px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--dp-transition-fast);
+  user-select: none;
+  position: relative;
+}
+.memory-card:hover:not(.flipped):not(.matched) {
+  border-color: var(--dp-primary);
+  transform: scale(1.04);
+}
+.memory-card .card-back {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; color: var(--dp-text-muted);
+  background: linear-gradient(135deg, rgba(124,92,252,0.15), rgba(255,107,157,0.1));
+  border-radius: var(--dp-radius-sm);
+  transition: opacity 0.2s;
+}
+.memory-card.flipped .card-back { opacity: 0; pointer-events: none; }
+.memory-card.matched {
+  border-color: var(--dp-text-success);
+  background: rgba(92,219,114,0.12);
+  cursor: default;
+  animation: match-flash 0.5s ease 2;
+}
+.memory-card.wrong-flash {
+  animation: wrong-flash 0.4s ease;
+}
+@keyframes match-flash {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(92,219,114,0); }
+  50% { box-shadow: 0 0 12px 4px rgba(92,219,114,0.5); }
+}
+@keyframes wrong-flash {
+  0%, 100% { border-color: var(--dp-border); }
+  50% { border-color: #ff4757; background: rgba(255,71,87,0.1); }
+}
+.memory-start-btn {
+  padding: 10px 32px;
+  border-radius: var(--dp-radius-sm);
+  background: var(--dp-primary);
+  border: none;
+  color: #fff;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; font-family: var(--dp-font);
+  transition: all var(--dp-transition-fast);
+}
+.memory-start-btn:hover { background: var(--dp-primary-dark); }
+.memory-result {
+  margin-top: var(--dp-space-md);
+  padding: var(--dp-space-md);
+  border-radius: var(--dp-radius-md);
+  background: var(--dp-bg-card);
+  font-size: 13px; color: var(--dp-text-primary);
+  line-height: 1.6;
+}
+
+/* ═══ 节奏点击 ═══ */
+.rhythm-container {
+  text-align: center; padding-top: 4px;
+}
+.rhythm-hud {
+  display: flex; justify-content: center; gap: 32px;
+  margin-bottom: var(--dp-space-md);
+  font-size: 13px; color: var(--dp-text-secondary);
+}
+.rhythm-hud span { font-weight: 600; color: var(--dp-text-primary); }
+.rhythm-area {
+  position: relative;
+  width: 300px; height: 300px;
+  margin: 0 auto;
+  background: var(--dp-bg-card);
+  border-radius: 50%;
+  border: 2px solid var(--dp-border);
+  overflow: hidden;
+  cursor: crosshair;
+}
+.rhythm-overlay {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.4);
+  border-radius: 50%;
+  z-index: 2;
+  cursor: pointer;
+  color: #fff; font-size: 18px; font-weight: 600;
+}
+.rhythm-overlay small {
+  font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 6px;
+}
+.rhythm-note {
+  position: absolute;
+  font-size: 32px;
+  cursor: pointer;
+  user-select: none;
+  animation: note-pop-in 0.2s ease-out;
+  transition: transform 0.15s;
+}
+.rhythm-note.hit {
+  animation: note-hit 0.3s ease-out forwards;
+}
+@keyframes note-pop-in {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes note-hit {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.6); opacity: 0.8; }
+  100% { transform: scale(0); opacity: 0; }
+}
+.rhythm-countdown {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 64px; font-weight: 700; color: var(--dp-primary-light);
+  z-index: 3; border-radius: 50%;
+  pointer-events: none;
+}
+.rhythm-result {
+  margin-top: var(--dp-space-md);
+  padding: var(--dp-space-md);
+  border-radius: var(--dp-radius-md);
+  background: var(--dp-bg-card);
+  font-size: 13px; color: var(--dp-text-primary);
+  line-height: 1.6;
+}
+
+/* ═══ 规则说明 ═══ */
+.game-rules {
+  margin-bottom: var(--dp-space-md);
+  padding: 8px 12px;
+  border-radius: var(--dp-radius-sm);
+  background: rgba(124,92,252,0.08);
+  border: 1px solid rgba(124,92,252,0.15);
+  font-size: 12px;
+  color: var(--dp-text-secondary);
+  line-height: 1.6;
+}
+.game-rules b {
+  color: var(--dp-text-primary);
+  font-weight: 600;
+}
+.game-rules .emoji {
+  font-size: 14px;
+}
+</style>
+</head>
+<body>
+<div class="dp-panel anim-panel-in" id="minigame-panel">
+  <div class="dp-panel-header">
+    <span class="dp-panel-title">🎮 小游戏</span>
+    <button class="dp-panel-close" id="close-btn" title="关闭 (ESC)">&times;</button>
+  </div>
+
+  <div class="dp-panel-body">
+    <!-- 游戏标签 -->
+    <div class="game-tabs">
+      <button class="game-tab active" data-game="rps">✊ 石头剪刀布</button>
+      <button class="game-tab" data-game="food">🍱 食物反应</button>
+      <button class="game-tab" data-game="memory">🧠 记忆翻牌</button>
+      <button class="game-tab" data-game="rhythm">🎵 节奏点击</button>
+    </div>
+
+    <!-- 石头剪刀布 -->
+    <div class="game-area active" id="game-rps">
+      <div class="rps-container">
+        <div class="game-rules">
+          <span class="emoji">🎯</span> <b>规则：</b>下注金币 → 选择出拳 → 赢得 <b>2倍</b> 下注金币，输扣下注金币，平局退回。<br>
+          <span class="emoji">💡</span> <b>提示：</b>每天最多 <b>10</b> 次，等级越高下注上限越高。
+        </div>
+        <div class="rps-bet">
+          <label>下注金币：</label>
+          <input type="number" class="rps-bet-input" id="rps-bet" value="50" min="10" max="1000" step="10">
+        </div>
+        <div class="rps-choices" id="rps-choices">
+          <div class="rps-choice" data-choice="rock" title="石头">✊</div>
+          <div class="rps-choice" data-choice="scissors" title="剪刀">✌️</div>
+          <div class="rps-choice" data-choice="paper" title="布">✋</div>
+        </div>
+        <div class="rps-vs" id="rps-vs" style="visibility:hidden">
+          <div class="rps-vs-item"><span class="emoji" id="rps-player"></span><div class="label">你</div></div>
+          <div class="rps-vs-divider">VS</div>
+          <div class="rps-vs-item"><span class="emoji" id="rps-cpu"></span><div class="label">爪爪</div></div>
+        </div>
+        <div class="rps-result" id="rps-result">选择你的出拳！</div>
+      </div>
+    </div>
+
+    <!-- 食物反应 -->
+    <div class="game-area" id="game-food">
+      <div class="game-rules" style="margin: 8px 0;">
+        <span class="emoji">🎯</span> <b>规则：</b>点击出现的食物得分，<b>5</b> 个食物后结算。每个食物 <b>2秒</b> 消失。<br>
+        <span class="emoji">💰</span> <b>奖励：</b>点到 <b>1个</b> = <b>10金币</b>，全中额外奖励。
+      </div>
+      <div class="food-container" id="food-area">
+        <div class="food-hud">
+          <span id="food-score">得分：0</span>
+          <span id="food-remaining">剩余：5</span>
+        </div>
+        <div class="food-start-overlay" id="food-start">
+          <span>点击开始</span>
+          <small>5个食物，点到加金币</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- 记忆翻牌 -->
+    <div class="game-area" id="game-memory">
+      <div class="memory-container">
+        <div class="game-rules">
+          <span class="emoji">🎯</span> <b>规则：</b>翻牌配对，<b>8对</b> 牌全部配对成功即通关。<br>
+          <span class="emoji">💰</span> <b>奖励：</b>步数越少奖励越高（<b>500</b> 金币 - 步数×20，最低 <b>100</b>）。
+        </div>
+        <div class="memory-hud">
+          <span>步数：<span id="mem-steps">0</span></span>
+          <span>配对：<span id="mem-matched">0</span>/8</span>
+        </div>
+        <div class="memory-board" id="memory-board"></div>
+        <button class="memory-start-btn" id="memory-start-btn">开始游戏</button>
+        <div class="memory-result" id="memory-result" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- 节奏点击 -->
+    <div class="game-area" id="game-rhythm">
+      <div class="rhythm-container">
+        <div class="game-rules">
+          <span class="emoji">🎯</span> <b>规则：</b>点击出现的音符得分，<b>20</b> 个音符后结算。每个音符 <b>1.5秒</b> 消失。<br>
+          <span class="emoji">💰</span> <b>奖励：</b>点到 <b>1个</b> = <b>10金币</b>，全中额外奖励。
+        </div>
+        <div class="rhythm-hud">
+          <span>得分：<span id="rhythm-score">0</span></span>
+          <span>剩余：<span id="rhythm-remaining">20</span>/20</span>
+        </div>
+        <div class="rhythm-area" id="rhythm-area">
+          <div class="rhythm-overlay" id="rhythm-start-overlay">
+            <span>开始游戏</span>
+            <small>点击出现的音符得分</small>
+          </div>
+        </div>
+        <div class="rhythm-result" id="rhythm-result" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const api = window.petAPI;
+
+  // ─── 标签切换 ───
+  document.querySelectorAll('.game-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.game-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.game-area').forEach(a => a.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('game-' + tab.dataset.game).classList.add('active');
+    });
+  });
+
+  // ══════════════════════════════════════════
+  // 石头剪刀布
+  // ══════════════════════════════════════════
+  const CHOICES = { rock: '✊', scissors: '✌️', paper: '✋' };
+  const CHOICE_KEYS = Object.keys(CHOICES);
+  let rpsLocked = false;
+
+  document.querySelectorAll('.rps-choice').forEach(el => {
+    el.addEventListener('click', () => {
+      if (rpsLocked) return;
+      rpsLocked = true;
+
+      const choice = el.dataset.choice;
+      const bet = parseInt(document.getElementById('rps-bet').value) || 50;
+
+      // 禁用按钮
+      document.querySelectorAll('.rps-choice').forEach(c => c.classList.add('disabled'));
+      document.getElementById('rps-result').textContent = '爪爪思考中...';
+      document.getElementById('rps-result').className = 'rps-result';
+
+      // 显示 VS
+      const vs = document.getElementById('rps-vs');
+      vs.style.visibility = 'visible';
+      document.getElementById('rps-player').textContent = CHOICES[choice];
+      document.getElementById('rps-cpu').textContent = '🤔';
+
+      // 1.5 秒后出结果（模拟思考）
+      setTimeout(async () => {
+        try {
+          const result = await api.minigameRps(choice, bet);
+          if (result.success) {
+            const d = result.data;
+            document.getElementById('rps-cpu').textContent = CHOICES[d.cpuChoice] || '✊';
+
+            let msg, cls;
+            if (d.result === 'win') {
+              msg = `你赢了！+${d.goldEarned} 金币`;
+              cls = 'win';
+            } else if (d.result === 'lose') {
+              msg = `输了... -${bet} 金币`;
+              cls = 'lose';
+            } else {
+              msg = '平局，下注退回';
+              cls = 'draw';
+            }
+            document.getElementById('rps-result').textContent = msg;
+            document.getElementById('rps-result').className = 'rps-result ' + cls;
+          } else {
+            document.getElementById('rps-result').textContent = result.error || '出错啦';
+            document.getElementById('rps-result').className = 'rps-result lose';
+          }
+        } catch (err) {
+          document.getElementById('rps-result').textContent = '网络错误';
+          document.getElementById('rps-result').className = 'rps-result lose';
+        }
+
+        // 恢复
+        setTimeout(() => {
+          document.querySelectorAll('.rps-choice').forEach(c => c.classList.remove('disabled'));
+          rpsLocked = false;
+        }, 1500);
+      }, 1500);
+    });
+  });
+
+  // ══════════════════════════════════════════
+  // 食物反应
+  // ══════════════════════════════════════════
+  const FOOD_ICONS = ['🍕', '🍔', '🌮', '🍣', '🍰', '🧁', '🍩', '🍪', '🥐', '🍿'];
+  const FOOD_TOTAL = 5;
+  let foodScore = 0;
+  let foodRemaining = 0;
+  let foodActive = false;
+  let foodTimeout = null;
+
+  const foodArea = document.getElementById('food-area');
+  const foodStart = document.getElementById('food-start');
+  const foodScoreEl = document.getElementById('food-score');
+  const foodRemainEl = document.getElementById('food-remaining');
+
+  foodStart.addEventListener('click', startFoodGame);
+
+  function startFoodGame() {
+    if (foodActive) return;
+    foodActive = true;
+    foodScore = 0;
+    foodRemaining = FOOD_TOTAL;
+    foodScoreEl.textContent = '得分：0';
+    foodRemainEl.textContent = '剩余：' + foodRemaining;
+    foodStart.style.display = 'none';
+
+    // 清除旧食物
+    foodArea.querySelectorAll('.food-item').forEach(el => el.remove());
+
+    spawnFood();
+  }
+
+  function spawnFood() {
+    if (foodRemaining <= 0) return;
+
+    const icon = document.createElement('span');
+    icon.className = 'food-item';
+    icon.textContent = FOOD_ICONS[Math.floor(Math.random() * FOOD_ICONS.length)];
+
+    // 随机位置（避开 HUD 24px 顶部）
+    const maxX = foodArea.clientWidth - 40;
+    const maxY = foodArea.clientHeight - 50;
+    icon.style.left = (20 + Math.random() * maxX) + 'px';
+    icon.style.top = (30 + Math.random() * maxY) + 'px';
+
+    icon.addEventListener('click', () => {
+      if (!foodActive) return;
+      foodScore++;
+      foodScoreEl.textContent = '得分：' + foodScore;
+      icon.remove();
+      onFoodHit();
+    });
+
+    foodArea.appendChild(icon);
+
+    // 2 秒后消失
+    foodTimeout = setTimeout(() => {
+      if (icon.parentNode) icon.remove();
+      onFoodMiss();
+    }, 2000);
+  }
+
+  function onFoodHit() {
+    foodRemaining--;
+    foodRemainEl.textContent = '剩余：' + foodRemaining;
+    if (foodRemaining <= 0) endFoodGame();
+    else scheduleNext();
+  }
+
+  function onFoodMiss() {
+    foodRemaining--;
+    foodRemainEl.textContent = '剩余：' + foodRemaining;
+    if (foodRemaining <= 0) endFoodGame();
+    else scheduleNext();
+  }
+
+  function scheduleNext() {
+    // 难度递增：间隔从 800ms 递减到 300ms
+    const interval = Math.max(300, 800 - (FOOD_TOTAL - foodRemaining) * 100);
+    setTimeout(spawnFood, interval);
+  }
+
+  async function endFoodGame() {
+    foodActive = false;
+    clearTimeout(foodTimeout);
+
+    try {
+      const result = await api.minigameReward('catch-food', foodScore);
+      if (result.success) {
+        foodStart.style.display = 'flex';
+        foodStart.innerHTML = `<span>完成了！${foodScore}/${FOOD_TOTAL}</span><small>点击再来一局</small>`;
+      }
+    } catch (err) {
+      foodStart.style.display = 'flex';
+      foodStart.innerHTML = '<span>出错啦</span><small>点击重试</small>';
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // 记忆翻牌
+  // ══════════════════════════════════════════
+  const MEM_EMOJIS = ['🍎','🍊','🍋','🍇','🍒','🥝','🍑','🥭'];
+  let memCards = [];         // 当前排列的 emoji 数组 (16)
+  let memFlipped = [];      // 已翻开索引
+  let memMatched = [];      // 已配对索引
+  let memSteps = 0;
+  let memLocked = false;    // 动画期间禁止点击
+  let memStarted = false;
+  let memGameOver = false;
+
+  const memBoard = document.getElementById('memory-board');
+  const memStartBtn = document.getElementById('memory-start-btn');
+  const memStepsEl = document.getElementById('mem-steps');
+  const memMatchedEl = document.getElementById('mem-matched');
+  const memResult = document.getElementById('memory-result');
+
+  function renderMemoryBoard() {
+    memBoard.innerHTML = '';
+    for (let i = 0; i < 16; i++) {
+      const card = document.createElement('div');
+      card.className = 'memory-card';
+      card.dataset.index = i;
+
+      // 卡牌正面 (emoji)
+      const face = document.createElement('span');
+      face.textContent = memCards[i] || '';
+      face.style.opacity = '0';
+
+      // 卡牌背面
+      const back = document.createElement('span');
+      back.className = 'card-back';
+      back.textContent = '❓';
+
+      card.appendChild(face);
+      card.appendChild(back);
+
+      // 如果是已配对，保持翻开
+      if (memMatched.includes(i)) {
+        card.classList.add('flipped', 'matched');
+        face.style.opacity = '1';
+      }
+
+      card.addEventListener('click', () => onCardClick(i, card));
+      memBoard.appendChild(card);
+    }
+  }
+
+  // Fisher-Yates 洗牌
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function resetMemory() {
+    memSteps = 0;
+    memFlipped = [];
+    memMatched = [];
+    memLocked = false;
+    memStarted = false;
+    memGameOver = false;
+    memCards = shuffle([...MEM_EMOJIS, ...MEM_EMOJIS]);
+    memStepsEl.textContent = '0';
+    memMatchedEl.textContent = '0';
+    memResult.style.display = 'none';
+    memStartBtn.style.display = '';
+    renderMemoryBoard();
+  }
+
+  function onCardClick(index, cardEl) {
+    if (!memStarted || memLocked || memGameOver) return;
+    if (memFlipped.includes(index) || memMatched.includes(index)) return;
+    if (memFlipped.length >= 2) return;
+
+    // 翻开当前牌
+    memFlipped.push(index);
+    cardEl.classList.add('flipped');
+    cardEl.querySelector('span:first-child').style.opacity = '1';
+
+    if (memFlipped.length === 2) {
+      memSteps++;
+      memStepsEl.textContent = memSteps;
+      memLocked = true;
+
+      const [a, b] = memFlipped;
+      const cardA = memBoard.children[a];
+      const cardB = memBoard.children[b];
+
+      if (memCards[a] === memCards[b]) {
+        // 配对成功
+        memMatched.push(a, b);
+        memMatchedEl.textContent = memMatched.length / 2;
+        cardA.classList.add('matched');
+        cardB.classList.add('matched');
+        memFlipped = [];
+        memLocked = false;
+
+        if (memMatched.length === 16) {
+          memGameOver = true;
+          finishMemory();
+        }
+      } else {
+        // 配对失败
+        cardA.classList.add('wrong-flash');
+        cardB.classList.add('wrong-flash');
+        setTimeout(() => {
+          cardA.classList.remove('flipped', 'wrong-flash');
+          cardB.classList.remove('flipped', 'wrong-flash');
+          cardA.querySelector('span:first-child').style.opacity = '0';
+          cardB.querySelector('span:first-child').style.opacity = '0';
+          memFlipped = [];
+          memLocked = false;
+        }, 600);
+      }
+    }
+  }
+
+  async function finishMemory() {
+    const gold = Math.max(100, 500 - memSteps * 20);
+    const exp = Math.max(20, 150 - memSteps * 5);
+    try {
+      const result = await api.minigameFinish('memory', memSteps);
+      if (result.success) {
+        const d = result.data || {};
+        const r = d.reward || {};
+        memResult.style.display = '';
+        memResult.innerHTML = `🎉 恭喜完成！<br>步数：<b>${memSteps}</b> 步<br>获得 <b style="color:#ffc83d">${r.gold ?? gold}</b> 金币<br>获得 <b style="color:#9b82fc">${r.exp ?? exp}</b> 经验`;
+      } else {
+        memResult.style.display = '';
+        memResult.innerHTML = `🎉 完成！步数：<b>${memSteps}</b> 步<br>获得 <b style="color:#ffc83d">${gold}</b> 金币<br>获得 <b style="color:#9b82fc">${exp}</b> 经验`;
+      }
+    } catch (err) {
+      memResult.style.display = '';
+      memResult.innerHTML = `🎉 完成！步数：<b>${memSteps}</b> 步<br>获得 <b style="color:#ffc83d">${gold}</b> 金币<br>获得 <b style="color:#9b82fc">${exp}</b> 经验`;
+    }
+    memStartBtn.style.display = '';
+    memStartBtn.textContent = '再来一局';
+  }
+
+  memStartBtn.addEventListener('click', async () => {
+    resetMemory();
+    memStarted = true;
+    memStartBtn.style.display = 'none';
+    memResult.style.display = 'none';
+    try { await api.minigameStart('memory'); } catch (e) { /* 静默 */ }
+  });
+
+  // ══════════════════════════════════════════
+  // 节奏点击
+  // ══════════════════════════════════════════
+  const RHYTHM_TOTAL = 20;
+  const RHYTHM_DURATION = 1500;   // 每个音符显示时长 ms
+  const RHYTHM_INTERVAL = 1200;   // 音符出现间隔 ms
+  let rhythmScore = 0;
+  let rhythmRemaining = 0;
+  let rhythmActive = false;
+  let rhythmNotes = [];
+  let rhythmTimer = null;
+
+  const rhythmArea = document.getElementById('rhythm-area');
+  const rhythmOverlay = document.getElementById('rhythm-start-overlay');
+  const rhythmScoreEl = document.getElementById('rhythm-score');
+  const rhythmRemainingEl = document.getElementById('rhythm-remaining');
+  const rhythmResult = document.getElementById('rhythm-result');
+
+  function spawnRhythmNote() {
+    if (!rhythmActive || rhythmRemaining <= 0) return;
+
+    const note = document.createElement('span');
+    note.className = 'rhythm-note';
+    note.textContent = '🎵';
+
+    // 在圆形区域内随机位置（避开边缘）
+    const areaRect = rhythmArea.getBoundingClientRect();
+    const cx = areaRect.width / 2;
+    const cy = areaRect.height / 2;
+    const maxR = Math.min(cx, cy) - 30;
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 10 + Math.random() * (maxR - 10);
+    const x = cx + Math.cos(angle) * dist - 16;
+    const y = cy + Math.sin(angle) * dist - 16;
+
+    note.style.left = x + 'px';
+    note.style.top = y + 'px';
+
+    let clicked = false;
+    note.addEventListener('click', (e) => {
+      if (clicked) return;
+      clicked = true;
+      rhythmScore++;
+      rhythmScoreEl.textContent = rhythmScore;
+      note.classList.add('hit');
+      e.stopPropagation();
+      setTimeout(() => { if (note.parentNode) note.remove(); }, 300);
+    });
+
+    rhythmNotes.push(note);
+    rhythmArea.appendChild(note);
+
+    // 超时移除
+    const timeoutId = setTimeout(() => {
+      if (!clicked && note.parentNode) note.remove();
+      rhythmNotes = rhythmNotes.filter(n => n !== note);
+    }, RHYTHM_DURATION);
+
+    rhythmRemaining--;
+    rhythmRemainingEl.textContent = rhythmRemaining;
+
+    if (rhythmRemaining <= 0) {
+      // 等待最后一个音符过期
+      setTimeout(() => {
+        if (rhythmActive) finishRhythm();
+      }, RHYTHM_DURATION + 100);
+    } else {
+      rhythmTimer = setTimeout(spawnRhythmNote, RHYTHM_INTERVAL);
+    }
+  }
+
+  function startRhythmCountdown() {
+    rhythmOverlay.innerHTML = '<span style="font-size:48px">3</span>';
+    let count = 3;
+    const cdInterval = setInterval(() => {
+      count--;
+      if (count > 0) {
+        rhythmOverlay.querySelector('span').textContent = count;
+      } else {
+        clearInterval(cdInterval);
+        rhythmOverlay.style.display = 'none';
+        spawnRhythmNote();
+      }
+    }, 800);
+  }
+
+  async function finishRhythm() {
+    rhythmActive = false;
+    clearTimeout(rhythmTimer);
+    // 清理残留音符
+    rhythmArea.querySelectorAll('.rhythm-note').forEach(n => n.remove());
+    rhythmNotes = [];
+
+    const gold = Math.max(10, rhythmScore * 2);
+    const exp = Math.max(5, Math.floor(rhythmScore * 0.5));
+    try {
+      const result = await api.minigameFinish('rhythm', rhythmScore);
+      if (result.success) {
+        const d = result.data || {};
+        const r = d.reward || {};
+        rhythmResult.style.display = '';
+        rhythmResult.innerHTML = `🎉 节奏大师！<br>得分：<b>${rhythmScore}</b> / ${RHYTHM_TOTAL}<br>获得 <b style="color:#ffc83d">${r.gold ?? gold}</b> 金币<br>获得 <b style="color:#9b82fc">${r.exp ?? exp}</b> 经验`;
+      } else {
+        rhythmResult.style.display = '';
+        rhythmResult.innerHTML = `🎉 完成！得分：<b>${rhythmScore}</b> / ${RHYTHM_TOTAL}<br>获得 <b style="color:#ffc83d">${gold}</b> 金币<br>获得 <b style="color:#9b82fc">${exp}</b> 经验`;
+      }
+    } catch (err) {
+      rhythmResult.style.display = '';
+      rhythmResult.innerHTML = `🎉 完成！得分：<b>${rhythmScore}</b> / ${RHYTHM_TOTAL}<br>获得 <b style="color:#ffc83d">${gold}</b> 金币<br>获得 <b style="color:#9b82fc">${exp}</b> 经验`;
+    }
+    rhythmOverlay.style.display = 'flex';
+    rhythmOverlay.innerHTML = '<span>再来一局</span><small>点击出现的音符得分</small>';
+  }
+
+  rhythmOverlay.addEventListener('click', async () => {
+    if (rhythmActive) return;
+    rhythmScore = 0;
+    rhythmRemaining = RHYTHM_TOTAL;
+    rhythmActive = true;
+    rhythmNotes = [];
+    rhythmScoreEl.textContent = '0';
+    rhythmRemainingEl.textContent = RHYTHM_TOTAL;
+    rhythmResult.style.display = 'none';
+    rhythmArea.querySelectorAll('.rhythm-note').forEach(n => n.remove());
+
+    try { await api.minigameStart('rhythm'); } catch (e) { /* 静默 */ }
+    startRhythmCountdown();
+  });
+
+  // 初始化记忆翻牌棋盘
+  resetMemory();
+
+  // ─── 自定义关闭（清理小游戏状态）───
+  window._panelCloseHandler = function() {
+    foodActive = false;
+    clearTimeout(foodTimeout);
+    rhythmActive = false;
+    clearTimeout(rhythmTimer);
+    const panel = document.getElementById('minigame-panel');
+    panel.classList.add('dp-panel-exit');
+    setTimeout(() => { if (api) api.closePanel(); }, 200);
+  };
+})();
+</script>
+<script src="../components/panel-common.js"></script>
+</body>
+</html>

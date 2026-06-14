@@ -83,34 +83,43 @@ class SaveManager {
   autoSave() {
     if (this.dirtyComponents.size === 0) return;
 
-    try {
-      // 保存宠物状态
-      if (this.dirtyComponents.has('petAI') || this.dirtyComponents.has('all')) {
-        this.petAI.saveStatus();
-      }
+    const wasDirty = new Set(this.dirtyComponents);
 
-      // 遍历其他脏组件，调用对应的 save 方法
-      for (const name of this.dirtyComponents) {
-        if (name === 'petAI' || name === 'all') continue; // 已处理
-        const component = this.components[name];
-        if (component && typeof component.save === 'function') {
+    // 保存宠物状态
+    if (this.dirtyComponents.has('petAI') || this.dirtyComponents.has('all')) {
+      try {
+        this.petAI.saveStatus();
+        this.dirtyComponents.delete('petAI');
+      } catch (err) {
+        console.error('[SaveManager] 自动保存宠物状态失败:', err.message);
+      }
+    }
+
+    // 遍历其他脏组件，调用对应的 save 方法
+    for (const name of this.dirtyComponents) {
+      if (name === 'petAI' || name === 'all') continue;
+      const component = this.components[name];
+      if (component && typeof component.save === 'function') {
+        try {
           component.save();
+          this.dirtyComponents.delete(name);
+        } catch (err) {
+          console.error(`[SaveManager] 自动保存组件 ${name} 失败:`, err.message);
         }
       }
+    }
 
-      // 清除脏标记
-      this.dirtyComponents.clear();
-
-      // 写入自动保存时间戳
-      this.db.run(
-        "INSERT OR REPLACE INTO db_meta (key, value) VALUES ('last_auto_save', ?)",
-        new Date().toISOString()
-      );
-
-      // sql.js 内存数据库，写入变更到文件
-      this.db.save();
-    } catch (err) {
-      console.error('[SaveManager] 自动保存失败:', err.message);
+    // 如果有组件保存成功，写入时间戳并持久化 DB
+    if (wasDirty.size > this.dirtyComponents.size) {
+      try {
+        this.db.run(
+          "INSERT OR REPLACE INTO db_meta (key, value) VALUES ('last_auto_save', ?)",
+          new Date().toISOString(),
+        );
+        this.db.save();
+      } catch (err) {
+        console.error('[SaveManager] 自动保存时间戳/DB持久化失败:', err.message);
+      }
     }
   }
 
@@ -119,34 +128,39 @@ class SaveManager {
    * 保存所有组件状态
    */
   forceSave() {
+    // 保存宠物状态
     try {
-      // 保存宠物状态
       this.petAI.saveStatus();
+      if (this.dirtyComponents.has('petAI')) {
+        this.dirtyComponents.delete('petAI');
+      }
+    } catch (err) {
+      console.error('[SaveManager] 保存宠物状态失败:', err.message);
+    }
 
-      // 保存所有可保存组件
-      for (const [name, component] of Object.entries(this.components)) {
-        if (component && typeof component.save === 'function') {
-          try {
-            component.save();
-          } catch (err) {
-            console.error(`[SaveManager] 保存组件 ${name} 失败:`, err.message);
-          }
+    // 保存所有可保存组件，只清除成功保存的标记
+    for (const [name, component] of Object.entries(this.components)) {
+      if (component && typeof component.save === 'function') {
+        try {
+          component.save();
+          this.dirtyComponents.delete(name);
+        } catch (err) {
+          console.error(`[SaveManager] 保存组件 ${name} 失败:`, err.message);
         }
       }
-
-      // 清除脏标记
-      this.dirtyComponents.clear();
-
-      // 标记正常退出
-      this.markCleanExit();
-
-      // sql.js 是内存数据库，需手动保存到文件
-      this.db.forceSave();
-
-      console.log('[SaveManager] 强制保存完成');
-    } catch (err) {
-      console.error('[SaveManager] 强制保存失败:', err.message);
     }
+
+    // 标记正常退出
+    this.markCleanExit();
+
+    // sql.js 是内存数据库，需手动保存到文件
+    try {
+      this.db.forceSave();
+    } catch (err) {
+      console.error('[SaveManager] 数据库保存到文件失败:', err.message);
+    }
+
+    console.log('[SaveManager] 强制保存完成，剩余脏标记:', this.dirtyComponents.size);
 
     // 停止自动保存
     if (this.autoSaveTimer) {
@@ -200,9 +214,7 @@ class SaveManager {
             // 检查是否处于异常状态（如卡在某个行为）
             if (status.state === 'work') {
               // 检查是否有活跃打工记录
-              const activeWork = this.db.get(
-                "SELECT * FROM work_records WHERE user_id = 1 AND status = 'working'"
-              );
+              const activeWork = this.db.get("SELECT * FROM work_records WHERE user_id = 1 AND status = 'working'");
               if (!activeWork) {
                 this.db.run("UPDATE pet_status SET state = 'idle' WHERE pet_id = 1");
                 console.log('[SaveManager] 修正异常状态: work → idle');
@@ -212,9 +224,7 @@ class SaveManager {
 
           // 记录恢复日志
           try {
-            this.db.run(
-              "INSERT INTO event_log (user_id, event_type, event_data) VALUES (1, 'recovery', '{}')"
-            );
+            this.db.run("INSERT INTO event_log (user_id, event_type, event_data) VALUES (1, 'recovery', '{}')");
           } catch (err) {
             console.error('[SaveManager] 恢复日志记录失败:', err.message);
           }

@@ -116,21 +116,47 @@ const PetEngineModule = (() => {
     _loadState() {
       try {
         const saved = localStorage.getItem('pet-engine-state');
+        console.log('[PetEngine][LOAD] localStorage raw:', saved ? saved.slice(0, 200) + '...' : 'NULL');
         if (saved) {
           const parsed = JSON.parse(saved);
+          console.log('[PetEngine][LOAD] parsed key stats → hunger:', parsed.hunger, 'happy:', parsed.happy, 'energy:', parsed.energy, 'cleanliness:', parsed.cleanliness, 'health:', parsed.health, 'growth:', parsed.growth, 'coins:', parsed.coins);
+
+          // 异常恢复：核心属性全为 0 视为存档损坏，重置为默认值
+          const coreStats = ['hunger', 'happy', 'energy', 'cleanliness', 'health'];
+          const allZero = coreStats.every(k => (parsed[k] || 0) === 0);
+          if (allZero) {
+            console.warn('[PetEngine][LOAD] 检测到存档损坏（核心属性全为0），恢复为默认值');
+            this._state = this._createDefaultState();
+            return;
+          }
+
           this._state = { ...this._createDefaultState(), ...parsed };
           // 恢复 personality 对象
           if (parsed.personality && parsed.personality.id) {
             this._state.personality = PERSONALITIES[parsed.personality.id] || PERSONALITIES.playful;
           }
         }
-      } catch (e) { /* 忽略加载错误 */ }
+      } catch (e) {
+        console.error('[PetEngine][LOAD] 加载错误:', e.message);
+      }
     }
 
     _saveState() {
       try {
-        localStorage.setItem('pet-engine-state', JSON.stringify(this._state));
-      } catch (e) { /* 忽略保存错误 */ }
+        const s = this._state;
+        // 零值保护：核心属性全为 0 时不写入，防止覆盖正常存档
+        const coreStats = ['hunger', 'happy', 'energy', 'cleanliness', 'health'];
+        const allZero = coreStats.every(k => (s[k] || 0) === 0);
+        if (allZero) {
+          console.warn('[PetEngine][SAVE] 拒绝保存：核心属性全为0，可能是异常状态');
+          return;
+        }
+        const data = JSON.stringify(s);
+        console.log('[PetEngine][SAVE] writing → hunger:', s.hunger, 'happy:', s.happy, 'energy:', s.energy, 'cleanliness:', s.cleanliness, 'health:', s.health, 'growth:', s.growth, 'coins:', s.coins);
+        localStorage.setItem('pet-engine-state', data);
+      } catch (e) {
+        console.error('[PetEngine][SAVE] 保存错误:', e.message);
+      }
     }
 
     // ─── 事件系统 ───
@@ -171,32 +197,35 @@ const PetEngineModule = (() => {
       const offlineSeconds = (now - s.lastTick) / 1000;
       const tickMultiplier = Math.min(offlineSeconds / 10, 60); // 最多补偿 10 分钟
 
+      // 属性下限保护：防止衰减到 0
+      const MIN = 5;
+
       if (s.isSleeping) {
         s.energy = Math.min(100, s.energy + 3 * tickMultiplier);
-        s.hunger = Math.max(0, s.hunger - 0.5 * tickMultiplier);
+        s.hunger = Math.max(MIN, s.hunger - 0.5 * tickMultiplier);
         // 睡眠恢复
         if (s.energy >= 100) {
           this._wakeUp();
         }
       } else {
         const hungerDecay = (p.hungerDecay || 1) * 0.8;
-        s.hunger = Math.max(0, s.hunger - hungerDecay * tickMultiplier);
-        s.happy = Math.max(0, s.happy - (p.happyDecay || 1) * 0.4 * tickMultiplier);
-        s.energy = Math.max(0, s.energy - 0.3 * tickMultiplier);
-        s.cleanliness = Math.max(0, s.cleanliness - 0.3 * tickMultiplier);
+        s.hunger = Math.max(MIN, s.hunger - hungerDecay * tickMultiplier);
+        s.happy = Math.max(MIN, s.happy - (p.happyDecay || 1) * 0.4 * tickMultiplier);
+        s.energy = Math.max(MIN, s.energy - 0.3 * tickMultiplier);
+        s.cleanliness = Math.max(MIN, s.cleanliness - 0.3 * tickMultiplier);
       }
 
-      // 疾病影响
+      // 疾病影响（同样加下限保护）
       if (s.disease.id !== 'none' && s.disease.symptoms) {
         for (const [key, val] of Object.entries(s.disease.symptoms)) {
           const k = key === 'happiness' ? 'happy' : key;
-          if (s[k] !== undefined) s[k] = Math.max(0, Math.min(100, s[k] + val * tickMultiplier));
+          if (s[k] !== undefined) s[k] = Math.max(MIN, Math.min(100, s[k] + val * tickMultiplier));
         }
       }
 
-      // 饥饿/疲惫影响健康
-      if (s.hunger < 15) s.health = Math.max(0, s.health - 0.5 * tickMultiplier);
-      if (s.energy < 10) s.health = Math.max(0, s.health - 0.3 * tickMultiplier);
+      // 饥饿/疲惫影响健康（加下限保护）
+      if (s.hunger < 15) s.health = Math.max(MIN, s.health - 0.5 * tickMultiplier);
+      if (s.energy < 10) s.health = Math.max(MIN, s.health - 0.3 * tickMultiplier);
 
       // 成长
       if (s.hunger > 50 && s.happy > 50 && s.health > 70) {
@@ -207,13 +236,18 @@ const PetEngineModule = (() => {
       this._updateMood();
       this._saveState();
       this._emit('tick', this._getPublicState());
+      this.checkLevelUp();
     }
 
     // ─── 心情判定 ───
+    // 注意：前端内部字段为 happy/energy/cleanliness，对外暴露为 mood/stamina/hygiene
+    // 此处使用内部字段名做判定
     _updateMood() {
       const s = this._state;
       if (s.isSleeping) { s.mood = 'sleeping'; return; }
       if (s.disease.id !== 'none') { s.mood = 'sick'; return; }
+      if (s.energy < 15) { s.mood = 'tired'; return; }
+      if (s.cleanliness < 20) { s.mood = 'dirty'; return; }
       if (s.happy > 85) { s.mood = 'happy'; return; }
       if (s.hunger < 20) { s.mood = 'unhappy'; return; }
       s.mood = 'idle';
@@ -349,7 +383,17 @@ const PetEngineModule = (() => {
     _checkDisease() {
       const s = this._state;
       if (s.disease.id !== 'none') {
-        // 有一定概率自愈
+        // 持续时长超时自愈
+        if (s.disease.durationTicks !== undefined) {
+          s.disease.durationTicks -= 1;
+          if (s.disease.durationTicks <= 0) {
+            const cured = { ...s.disease };
+            s.disease = { ...DISEASES.none };
+            this._emit('diseaseCured', { disease: cured });
+            return;
+          }
+        }
+        // 随机自愈（概率较低，作为兜底）
         if (Math.random() < 0.15) {
           const cured = { ...s.disease };
           s.disease = { ...DISEASES.none };
@@ -368,7 +412,7 @@ const PetEngineModule = (() => {
 
       const diseaseKeys = Object.keys(DISEASES).filter(k => k !== 'none');
       const picked = diseaseKeys[Math.floor(Math.random() * diseaseKeys.length)];
-      s.disease = { ...DISEASES[picked] };
+      s.disease = { ...DISEASES[picked], durationTicks: DISEASES[picked].durationTicks || 10 };
       this._updateMood();
       this._saveState();
       this._emit('disease', { disease: s.disease });
@@ -402,6 +446,19 @@ const PetEngineModule = (() => {
     }
 
     // ─── 获取公开状态 ───
+    // ═══════════════════════════════════════════════════════════
+    // 字段映射表（前端内部状态 → 对外暴露名 → 后端 pet_status 表列名）：
+    //   内部字段      对外字段      后端列名       说明
+    //   ──────────────────────────────────────────────────────
+    //   happy      →  mood       →  mood          心情值
+    //   energy     →  stamina    →  stamina        体力值
+    //   cleanliness→  hygiene    →  hygiene        卫生值
+    //   hunger     →  hunger     →  hunger         饱食度（同名不需映射）
+    //   health     →  health     →  health         健康值（同名不需映射）
+    // ═══════════════════════════════════════════════════════════
+    // 内部逻辑（衰减、物品效果、疾病症状、随机事件）统一使用
+    // happy/energy/cleanliness。仅在此方法中做一次映射后对外暴露。
+    // 前端消费者（stats.html、shop.html 等）必须使用 mood/stamina/hygiene。
     _getPublicState() {
       const s = this._state;
       const stage = this._getStage(s.growth);
@@ -409,15 +466,15 @@ const PetEngineModule = (() => {
         name: s.name,
         personality: s.personality,
         hunger: s.hunger,
-        happy: s.happy,
-        energy: s.energy,
-        cleanliness: s.cleanliness,
+        mood: s.happy,        // happy → mood
+        stamina: s.energy,    // energy → stamina
+        hygiene: s.cleanliness, // cleanliness → hygiene
         health: s.health,
         growth: s.growth,
         growthPercent: s.growth,
         coins: s.coins,
         isSleeping: s.isSleeping,
-        mood: s.mood,
+        moodType: s.mood,
         disease: s.disease,
         stage: stage,
         stageName: stage ? stage.name : '幼猫',

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>爪爪打工</title>
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="../styles/animations.css">
+<link rel="stylesheet" href="../styles/design-system.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 520px; height: 480px;
+  background: transparent;
+  overflow: hidden;
+  font-family: var(--dp-font);
+}
+
+/* 打工列表 */
+.work-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 340px;
+  overflow-y: auto;
+}
+.work-item {
+  background: var(--dp-bg-card);
+  border: 1px solid var(--dp-border);
+  border-radius: var(--dp-radius-md);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all var(--dp-transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.work-item:hover {
+  background: var(--dp-bg-card-hover);
+  border-color: var(--dp-primary);
+}
+.work-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.work-item.disabled:hover {
+  background: var(--dp-bg-card);
+  border-color: var(--dp-border);
+}
+.work-item.active {
+  border-color: var(--dp-primary-light);
+  background: rgba(124, 92, 252, 0.08);
+}
+.work-icon { font-size: 28px; flex-shrink: 0; }
+.work-info { flex: 1; min-width: 0; }
+.work-name { font-size: 14px; font-weight: 600; color: var(--dp-text-primary); }
+.work-desc { font-size: 11px; color: var(--dp-text-secondary); margin-top: 2px; }
+.work-meta { font-size: 10px; color: var(--dp-text-muted); margin-top: 4px; }
+.work-meta span { margin-right: 8px; }
+.work-reward {
+  font-size: 14px; font-weight: 700; color: var(--dp-text-warning);
+  white-space: nowrap; flex-shrink: 0;
+}
+
+/* 当前打工状态 */
+.work-status {
+  background: rgba(124, 92, 252, 0.06);
+  border: 1px solid var(--dp-primary);
+  border-radius: var(--dp-radius-md);
+  padding: 14px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.work-status-title { font-size: 14px; font-weight: 600; color: var(--dp-text-primary); margin-bottom: 6px; }
+.work-status-countdown { font-size: 22px; font-weight: 700; color: var(--dp-primary-light); margin: 8px 0; }
+.work-status-actions { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+.btn-cancel {
+  background: rgba(255,85,85,0.15); color: #ff5555;
+  border: 1px solid rgba(255,85,85,0.3); border-radius: var(--dp-radius-sm);
+  padding: 6px 16px; font-size: 12px; cursor: pointer;
+  transition: all var(--dp-transition-fast);
+}
+.btn-cancel:hover { background: rgba(255,85,85,0.25); }
+.btn-finish {
+  background: rgba(34,197,94,0.15); color: #22c55e;
+  border: 1px solid rgba(34,197,94,0.3); border-radius: var(--dp-radius-sm);
+  padding: 6px 16px; font-size: 12px; cursor: pointer;
+  transition: all var(--dp-transition-fast);
+}
+.btn-finish:hover { background: rgba(34,197,94,0.25); }
+.btn-finish:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* 提示 */
+.work-hint {
+  font-size: 11px; color: var(--dp-text-muted);
+  text-align: center; margin-top: 8px;
+}
+
+/* toast 通知 */
+.work-toast {
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+  background: rgba(20,20,20,0.95); border: 1px solid var(--dp-border-light);
+  border-radius: var(--dp-radius-md); padding: 8px 16px;
+  font-size: 12px; color: var(--dp-text-primary);
+  z-index: 10000; opacity: 0; transition: opacity 200ms;
+  pointer-events: none;
+}
+.work-toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="dp-panel anim-panel-in" id="work-panel">
+  <div class="dp-panel-header">
+    <span class="dp-panel-title">💼 打工</span>
+    <button class="dp-panel-close" id="close-btn" title="关闭 (ESC)">&times;</button>
+  </div>
+  <div class="dp-panel-body">
+    <!-- 当前打工状态（有活跃打工时显示） -->
+    <div class="work-status" id="work-active-status" style="display:none">
+      <div class="work-status-title" id="active-work-name"></div>
+      <div class="work-status-countdown" id="active-work-countdown"></div>
+      <div class="work-status-actions">
+        <button class="btn-cancel" id="btn-cancel">取消打工</button>
+        <button class="btn-finish" id="btn-finish" disabled>完成打工</button>
+      </div>
+    </div>
+
+    <!-- 打工列表 -->
+    <div class="work-list" id="work-list"></div>
+    <div class="work-hint">打工消耗体力，完成后获得金币奖励</div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="work-toast" id="work-toast"></div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ─── 打工数据（前端兜底，真实数据从后端拉）───
+  // key 与后端 constants.js WORK_JOBS 对齐
+  const JOBS = {
+    leaflet:    { id: 'leaflet',    icon: '📄', name: '发传单',   duration: '1分钟',  minLevel: 1,  stamina: 10, reward: 200,  desc: '简单的体力活，适合新手' },
+    waiter:     { id: 'waiter',     icon: '🍽️', name: '当服务员', duration: '2分钟',  minLevel: 2,  stamina: 20, reward: 500,  desc: '餐厅服务员，偶尔能带点食物回来' },
+    delivery:   { id: 'delivery',   icon: '📦', name: '快递员',   duration: '4分钟',  minLevel: 3,  stamina: 30, reward: 800,  desc: '跑腿配送，收入还不错' },
+    actor:      { id: 'actor',      icon: '🎭', name: '表演者',   duration: '6分钟',  minLevel: 5,  stamina: 35, reward: 1500, desc: '街头表演，观众会给小费' },
+    explorer:   { id: 'explorer',   icon: '🧭', name: '探险家',   duration: '8分钟',  minLevel: 8,  stamina: 40, reward: 1000, desc: '探索未知区域，可能带回神奇道具' },
+    teacher:    { id: 'teacher',    icon: '📚', name: '家庭教师', duration: '10分钟', minLevel: 10, stamina: 30, reward: 2000, desc: '教书育人，脑力消耗大' },
+    researcher: { id: 'researcher', icon: '🔬', name: '研究员',   duration: '12分钟', minLevel: 15, stamina: 35, reward: 3000, desc: '深度研究项目，可能获得钻石' },
+    adventurer: { id: 'adventurer', icon: '⚔️', name: '冒险者',   duration: '16分钟', minLevel: 20, stamina: 50, reward: 5000, desc: '高风险高回报的冒险任务' },
+  };
+
+  let activeJobId = null;
+  let finishTime = null;
+  let countdownTimer = null;
+  let userLevel = 1;
+
+  // ─── 从后端拉打工列表和状态 ───
+  async function loadWorkData() {
+    try {
+      // 获取当前打工状态
+      const statusResult = await window.petAPI.workStatus();
+      if (statusResult && statusResult.success && statusResult.data) {
+        const sd = statusResult.data;
+        if (sd.isWorking) {
+          activeJobId = sd.workType;
+          finishTime = sd.finishTime;
+          updateActiveStatus(sd.workType, sd.finishTime);
+        }
+      }
+
+      // 获取可用工作列表
+      const jobsResult = await window.petAPI.workGetJobs();
+      console.log('[Work] jobs result:', JSON.stringify(jobsResult));
+      if (jobsResult && jobsResult.success && jobsResult.data) {
+        renderJobs(jobsResult.data);
+      } else {
+        renderJobs(null); // 用本地数据兜底
+      }
+
+      // 获取用户等级
+      const userResult = await window.petAPI.userInfo();
+      if (userResult && userResult.success && userResult.data) {
+        userLevel = userResult.data.level || 1;
+      }
+    } catch (_) {
+      renderJobs(null);
+    }
+  }
+
+  // ─── 渲染打工列表 ───
+  function renderJobs(backendJobs) {
+    console.log('[Work] renderJobs called, backendJobs:', backendJobs ? backendJobs.length : 'null');
+    const list = document.getElementById('work-list');
+    list.innerHTML = '';
+
+    // 如果有后端数据就用后端数据，否则用本地 JOBS
+    const jobs = backendJobs ? backendJobs : Object.values(JOBS);
+    console.log('[Work] rendering', jobs.length, 'jobs, userLevel=', userLevel, 'activeJobId=', activeJobId);
+
+    jobs.forEach(job => {
+      // 后端返回字段: type, name, duration(ms), durationText, baseReward, minLevel, staminaCost
+      // 本地 JOBS 字段: id, icon, name, duration(文字), minLevel, stamina, reward
+      const jobId = job.type || job.id || job;
+      const jobName = job.name || jobId;
+      const jobIcon = job.icon || job.emoji || '💼';
+      const jobDesc = job.desc || job.description || '';
+      const jobMinLevel = job.minLevel || 1;
+      const jobStamina = job.staminaCost != null ? job.staminaCost : (job.stamina || 0);
+      const jobReward = job.baseReward != null ? job.baseReward : (job.reward || 0);
+      // 时间格式化：后端 duration 是毫秒数，有 durationText 直接用，否则自己格式化
+      let jobDurationText = job.durationText;
+      if (!jobDurationText && typeof job.duration === 'number') {
+        const m = Math.round(job.duration / 60000);
+        jobDurationText = m >= 60 ? Math.floor(m / 60) + '小时' : m + '分钟';
+      }
+      if (!jobDurationText) jobDurationText = job.duration || '';
+
+      const canDo = userLevel >= jobMinLevel;
+      const isThisJob = activeJobId === jobId;
+
+      const el = document.createElement('div');
+      el.className = 'work-item' + (!canDo ? ' disabled' : '') + (isThisJob ? ' active' : '');
+      el.innerHTML = `
+        <span class="work-icon">${jobIcon}</span>
+        <div class="work-info">
+          <div class="work-name">${jobName}</div>
+          <div class="work-desc">${jobDesc}</div>
+          <div class="work-meta">
+            <span>⏱ ${jobDurationText}</span>
+            <span>⚡ 消耗${jobStamina}体力</span>
+            <span>📊 需${jobMinLevel}级</span>
+          </div>
+        </div>
+        <div class="work-reward">${jobReward}🪙</div>
+      `;
+
+      if (canDo && !isThisJob) {
+        el.addEventListener('click', () => {
+          startWork(jobId);
+        });
+      }
+
+      list.appendChild(el);
+    });
+  }
+
+  // ─── 开始打工 ───
+  async function startWork(jobId) {
+    console.log('[Work] startWork called with:', jobId);
+    try {
+      const result = await window.petAPI.workStart(jobId);
+      console.log('[Work] startWork result:', JSON.stringify(result));
+      if (result && result.success) {
+        activeJobId = jobId;
+        finishTime = result.data?.finishTime || result.finishTime;
+        if (finishTime) {
+          updateActiveStatus(jobId, finishTime);
+        }
+        renderJobs(null); // 刷新列表状态
+        showToast('✅ 开始打工：' + (JOBS[jobId]?.name || jobId));
+      } else {
+        showToast('❌ ' + (result?.message || '打工失败'));
+      }
+    } catch (err) {
+      showToast('❌ 打工出错');
+    }
+  }
+
+  // ─── 更新活跃打工状态 ───
+  function updateActiveStatus(jobId, endTime) {
+    const statusEl = document.getElementById('work-active-status');
+    const nameEl = document.getElementById('active-work-name');
+    const countdownEl = document.getElementById('active-work-countdown');
+    const btnFinish = document.getElementById('btn-finish');
+
+    statusEl.style.display = 'block';
+    nameEl.textContent = '正在打工：' + (JOBS[jobId]?.name || jobId);
+
+    // 倒计时
+    if (countdownTimer) clearInterval(countdownTimer);
+    updateCountdown(endTime);
+    countdownTimer = setInterval(() => updateCountdown(endTime), 1000);
+
+    // 按钮事件
+    btnFinish.disabled = true;
+    document.getElementById('btn-cancel').onclick = cancelWork;
+    btnFinish.onclick = finishWork;
+  }
+
+  function updateCountdown(endTime) {
+    const countdownEl = document.getElementById('active-work-countdown');
+    const btnFinish = document.getElementById('btn-finish');
+    const remaining = endTime - Date.now();
+
+    if (remaining <= 0) {
+      countdownEl.textContent = '打工完成！';
+      btnFinish.disabled = false;
+      if (countdownTimer) clearInterval(countdownTimer);
+      return;
+    }
+
+    const mins = Math.floor(remaining / 60000);
+    const secs = Math.floor((remaining % 60000) / 1000);
+    const hrs = Math.floor(mins / 60);
+    if (hrs > 0) {
+      countdownEl.textContent = `${hrs}时${mins % 60}分${secs}秒`;
+    } else {
+      countdownEl.textContent = `${mins}分${secs}秒`;
+    }
+    btnFinish.disabled = true;
+  }
+
+  // ─── 取消打工 ───
+  async function cancelWork() {
+    try {
+      const result = await window.petAPI.workCancel();
+      if (result && result.success) {
+        hideActiveStatus();
+        renderJobs(null);
+        showToast('已取消打工');
+      } else {
+        showToast('取消失败');
+      }
+    } catch (_) {
+      showToast('取消出错');
+    }
+  }
+
+  // ─── 完成打工 ───
+  async function finishWork() {
+    try {
+      const result = await window.petAPI.workFinish();
+      if (result && result.success) {
+        hideActiveStatus();
+        renderJobs(null);
+        const reward = result.data?.reward || result.reward || 0;
+        showToast('🎉 打工完成！获得 ' + reward + ' 金币');
+      } else {
+        showToast('完成失败');
+      }
+    } catch (_) {
+      showToast('完成出错');
+    }
+  }
+
+  function hideActiveStatus() {
+    activeJobId = null;
+    finishTime = null;
+    if (countdownTimer) clearInterval(countdownTimer);
+    document.getElementById('work-active-status').style.display = 'none';
+  }
+
+  // ─── Toast ───
+  function showToast(msg) {
+    const toast = document.getElementById('work-toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+
+  // ─── 初始化 ───
+  console.log('[Work] IIFE starting, window.petAPI:', !!window?.petAPI);
+  loadWorkData();
+})();
+</script>
+<script src="../components/panel-common.js"></script>
+</body>
+</html>

@@ -18,8 +18,7 @@ body {
 
 /* ─── 导航图标 ─── */
 .nav-icon {
-  width: 16px;
-  height: 16px;
+  width: 16px; height: 16px;
   color: var(--dp-text-muted);
   transition: color var(--dp-transition-fast);
 }
@@ -38,121 +37,112 @@ body {
 
 /* ─── 滑块组 ─── */
 .slider-group {
-  display: flex;
-  align-items: center;
-  gap: var(--dp-space-sm);
+  display: flex; align-items: center; gap: var(--dp-space-sm);
 }
 .slider-value {
   font-size: var(--dp-font-sm);
   color: var(--dp-text-secondary);
-  width: 32px;
-  text-align: right;
+  width: 36px; text-align: right;
 }
 
 /* ─── 头部图标 ─── */
 .header-icon {
-  vertical-align: middle;
-  margin-right: 6px;
-  width: 18px;
-  height: 18px;
+  vertical-align: middle; margin-right: 6px;
+  width: 18px; height: 18px;
 }
+
+/* ─── 关于页 ─── */
+.about-logo { font-size: 48px; text-align: center; margin: 16px 0 8px; }
+.about-name { text-align: center; font-size: 18px; font-weight: 600; color: var(--dp-text-primary); margin-bottom: 4px; }
+.about-ver { text-align: center; font-size: 12px; color: var(--dp-text-muted); margin-bottom: 20px; }
+.about-info { font-size: 12px; color: var(--dp-text-secondary); line-height: 2; }
+.about-info dt { color: var(--dp-text-muted); font-size: 11px; }
+.about-info dd { margin-bottom: 8px; }
 </style>
 </head>
 <body>
 <div class="dp-panel anim-panel-in" id="settings-panel">
-  <!-- 头部 -->
   <div class="dp-panel-header">
     <span class="dp-panel-title"><img src="../icons/icon-settings.svg" width="18" height="18" class="header-icon"> 设置</span>
-    <button class="dp-panel-close" id="close-btn" title="关闭 (ESC)">×</button>
+    <button class="dp-panel-close" id="close-btn" title="关闭 (ESC)">&times;</button>
   </div>
 
-  <!-- 左侧导航 + 右侧内容 -->
   <div class="dp-panel-layout" style="height: calc(100% - 52px);">
     <!-- 左侧导航 -->
     <div class="dp-nav" id="settings-nav">
-      <div class="dp-nav-item active" data-page="general">
-        <img src="../icons/icon-paw.svg" width="16" height="16" class="nav-icon">
-        <span>常规</span>
-      </div>
-      <div class="dp-nav-item" data-page="appearance">
-        <img src="../icons/icon-dress.svg" width="16" height="16" class="nav-icon">
-        <span>外观</span>
-      </div>
-      <div class="dp-nav-item" data-page="interaction">
-        <img src="../icons/icon-wave.svg" width="16" height="16" class="nav-icon">
-        <span>互动</span>
-      </div>
-      <div class="dp-nav-item" data-page="reminder">
+      <div class="dp-nav-item active" data-page="sound">
         <img src="../icons/icon-energy.svg" width="16" height="16" class="nav-icon">
-        <span>提醒</span>
+        <span>声音</span>
+      </div>
+      <div class="dp-nav-item" data-page="display">
+        <img src="../icons/icon-dress.svg" width="16" height="16" class="nav-icon">
+        <span>显示</span>
+      </div>
+      <div class="dp-nav-item" data-page="notify">
+        <img src="../icons/icon-wave.svg" width="16" height="16" class="nav-icon">
+        <span>通知</span>
+      </div>
+      <div class="dp-nav-item" data-page="about">
+        <img src="../icons/icon-heart.svg" width="16" height="16" class="nav-icon">
+        <span>关于</span>
       </div>
     </div>
 
     <!-- 右侧内容 -->
     <div class="dp-content" id="settings-content">
 
-      <!-- 常规页 -->
-      <div class="settings-page" id="page-general" style="display:block">
-        <h3>常规设置</h3>
+      <!-- ═══ 声音页 ═══ -->
+      <div class="settings-page" id="page-sound" style="display:block">
+        <h3>声音设置</h3>
 
         <div class="dp-setting-row">
           <div>
-            <div class="dp-setting-label">开机自启</div>
-            <div class="dp-setting-desc">随系统启动自动运行爪爪</div>
+            <div class="dp-setting-label">音效</div>
+            <div class="dp-setting-desc">点击、使用道具时播放音效</div>
           </div>
           <label class="dp-toggle">
-            <input type="checkbox" id="opt-auto-launch">
+            <input type="checkbox" id="opt-sfx" checked>
             <span class="dp-toggle-slider"></span>
           </label>
         </div>
 
         <div class="dp-setting-row">
           <div>
-            <div class="dp-setting-label">多显示器支持</div>
-            <div class="dp-setting-desc">允许爪爪出现在所有显示器上</div>
+            <div class="dp-setting-label">音效音量</div>
           </div>
-          <label class="dp-toggle">
-            <input type="checkbox" id="opt-multi-display" checked>
-            <span class="dp-toggle-slider"></span>
-          </label>
-        </div>
-
-        <div class="dp-setting-row">
-          <div>
-            <div class="dp-setting-label">最小化到托盘</div>
-            <div class="dp-setting-desc">关闭窗口时最小化而非退出</div>
+          <div class="slider-group">
+            <input type="range" class="dp-slider" id="opt-sfx-volume" min="0" max="100" value="80">
+            <span id="sfx-volume-val" class="slider-value">80%</span>
           </div>
-          <label class="dp-toggle">
-            <input type="checkbox" id="opt-tray" checked>
-            <span class="dp-toggle-slider"></span>
-          </label>
         </div>
 
         <div class="dp-divider"></div>
 
         <div class="dp-setting-row">
           <div>
-            <div class="dp-setting-label">爪爪名字</div>
+            <div class="dp-setting-label">背景音乐</div>
+            <div class="dp-setting-desc">播放轻松的背景音乐</div>
           </div>
-          <input class="dp-input" type="text" id="opt-name" maxlength="8" placeholder="输入名字" style="width:120px">
+          <label class="dp-toggle">
+            <input type="checkbox" id="opt-bgm">
+            <span class="dp-toggle-slider"></span>
+          </label>
         </div>
 
         <div class="dp-setting-row">
           <div>
-            <div class="dp-setting-label">性格</div>
+            <div class="dp-setting-label">音乐音量</div>
           </div>
-          <select class="dp-input" id="opt-personality" style="width:100px">
-            <option value="playful">活泼</option>
-            <option value="calm">高冷</option>
-            <option value="glutton">贪吃</option>
-            <option value="clingy">黏人</option>
-          </select>
+          <div class="slider-group">
+            <input type="range" class="dp-slider" id="opt-bgm-volume" min="0" max="100" value="50">
+            <span id="bgm-volume-val" class="slider-value">50%</span>
+          </div>
         </div>
       </div>
 
-      <!-- 外观页 -->
-      <div class="settings-page" id="page-appearance" style="display:none">
-        <h3>外观设置</h3>
+      <!-- ═══ 显示页 ═══ -->
+      <div class="settings-page" id="page-display" style="display:none">
+        <h3>显示设置</h3>
 
         <div class="dp-setting-row">
           <div>
@@ -187,81 +177,34 @@ body {
           </div>
         </div>
 
+        <div class="dp-divider"></div>
+
         <div class="dp-setting-row">
           <div>
             <div class="dp-setting-label">始终置顶</div>
             <div class="dp-setting-desc">爪爪窗口永远在其他窗口上方</div>
           </div>
           <label class="dp-toggle">
-            <input type="checkbox" id="opt-always-top" checked>
+            <input type="checkbox" id="opt-alwaysTop" checked>
+            <span class="dp-toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">开机自启</div>
+            <div class="dp-setting-desc">随系统启动自动运行爪爪</div>
+          </div>
+          <label class="dp-toggle">
+            <input type="checkbox" id="opt-autoLaunch">
             <span class="dp-toggle-slider"></span>
           </label>
         </div>
       </div>
 
-      <!-- 互动页 -->
-      <div class="settings-page" id="page-interaction" style="display:none">
-        <h3>互动设置</h3>
-
-        <div class="dp-setting-row">
-          <div>
-            <div class="dp-setting-label">点击反应</div>
-            <div class="dp-setting-desc">点击爪爪时有表情和台词反馈</div>
-          </div>
-          <label class="dp-toggle">
-            <input type="checkbox" id="opt-click-react" checked>
-            <span class="dp-toggle-slider"></span>
-          </label>
-        </div>
-
-        <div class="dp-setting-row">
-          <div>
-            <div class="dp-setting-label">自动行走</div>
-            <div class="dp-setting-desc">空闲时爪爪会在屏幕上漫步</div>
-          </div>
-          <label class="dp-toggle">
-            <input type="checkbox" id="opt-auto-walk" checked>
-            <span class="dp-toggle-slider"></span>
-          </label>
-        </div>
-
-        <div class="dp-setting-row">
-          <div>
-            <div class="dp-setting-label">随机台词</div>
-            <div class="dp-setting-desc">空闲时自动弹出对话气泡</div>
-          </div>
-          <label class="dp-toggle">
-            <input type="checkbox" id="opt-auto-talk" checked>
-            <span class="dp-toggle-slider"></span>
-          </label>
-        </div>
-
-        <div class="dp-setting-row">
-          <div>
-            <div class="dp-setting-label">眼睛跟随鼠标</div>
-            <div class="dp-setting-desc">爪爪的眼睛会跟随鼠标移动</div>
-          </div>
-          <label class="dp-toggle">
-            <input type="checkbox" id="opt-eye-track" checked>
-            <span class="dp-toggle-slider"></span>
-          </label>
-        </div>
-
-        <div class="dp-setting-row">
-          <div>
-            <div class="dp-setting-label">行走速度</div>
-            <div class="dp-setting-desc">自动漫步的移动速度</div>
-          </div>
-          <div class="slider-group">
-            <input type="range" class="dp-slider" id="opt-walk-speed" min="30" max="200" value="100">
-            <span id="walk-speed-val" class="slider-value">100%</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 提醒页 -->
-      <div class="settings-page" id="page-reminder" style="display:none">
-        <h3>提醒设置</h3>
+      <!-- ═══ 通知页 ═══ -->
+      <div class="settings-page" id="page-notify" style="display:none">
+        <h3>通知设置</h3>
 
         <div class="dp-setting-row">
           <div>
@@ -269,7 +212,7 @@ body {
             <div class="dp-setting-desc">饥饿值低于阈值时弹出提醒</div>
           </div>
           <label class="dp-toggle">
-            <input type="checkbox" id="opt-hunger-alert" checked>
+            <input type="checkbox" id="opt-hungerAlert" checked>
             <span class="dp-toggle-slider"></span>
           </label>
         </div>
@@ -280,7 +223,7 @@ body {
             <div class="dp-setting-desc">爪爪生病时发出通知</div>
           </div>
           <label class="dp-toggle">
-            <input type="checkbox" id="opt-sick-alert" checked>
+            <input type="checkbox" id="opt-sickAlert" checked>
             <span class="dp-toggle-slider"></span>
           </label>
         </div>
@@ -291,10 +234,12 @@ body {
             <div class="dp-setting-desc">爪爪升级时弹出庆祝</div>
           </div>
           <label class="dp-toggle">
-            <input type="checkbox" id="opt-levelup-alert" checked>
+            <input type="checkbox" id="opt-levelupAlert" checked>
             <span class="dp-toggle-slider"></span>
           </label>
         </div>
+
+        <div class="dp-divider"></div>
 
         <div class="dp-setting-row">
           <div>
@@ -305,6 +250,42 @@ body {
             <input type="range" class="dp-slider" id="opt-threshold" min="10" max="50" value="20">
             <span id="threshold-val" class="slider-value">20%</span>
           </div>
+        </div>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">随机台词</div>
+            <div class="dp-setting-desc">空闲时自动弹出对话气泡</div>
+          </div>
+          <label class="dp-toggle">
+            <input type="checkbox" id="opt-autoTalk" checked>
+            <span class="dp-toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- ═══ 关于页 ═══ -->
+      <div class="settings-page" id="page-about" style="display:none">
+        <h3>关于</h3>
+        <div class="about-logo">🐾</div>
+        <div class="about-name">爪爪桌宠</div>
+        <div class="about-ver" id="about-ver">v1.0.0</div>
+        <dl class="about-info">
+          <dt>技术栈</dt>
+          <dd>Electron + sql.js + 原生 HTML/CSS/JS</dd>
+          <dt>特性</dt>
+          <dd>AI 行为树 · 成长等级系统 · 经济系统（三货币 + 道具包 v2 + 背包扩容） · 任务系统（每日任务 + 成就） · 四款小游戏（猜拳/食物反应/记忆翻牌/节奏点击） · 多主题皮肤（9 款，含传说/史诗稀有度） · 打工系统 · 签到系统</dd>
+          <dt>数据存储</dt>
+          <dd>本地 SQLite（sql.js），数据不离开你的电脑</dd>
+          <dt>项目路径</dt>
+          <dd id="about-path" style="word-break:break-all;font-size:11px;color:var(--dp-text-muted)">—</dd>
+        </dl>
+        <div class="dp-divider" style="margin:16px 0 12px"></div>
+        <button class="dp-btn dp-btn-danger" id="btn-reset-save" style="width:100%;font-size:13px;padding:8px 0">
+          ⚠️ 重置存档
+        </button>
+        <div style="font-size:11px;color:var(--dp-text-muted);text-align:center;margin-top:6px">
+          清除所有存档数据，恢复到初始状态（不可撤销）
         </div>
       </div>
 
@@ -343,50 +324,46 @@ body {
       display.textContent = slider.value + '%';
     });
   }
+  bindSlider('opt-sfx-volume', 'sfx-volume-val');
+  bindSlider('opt-bgm-volume', 'bgm-volume-val');
   bindSlider('opt-size', 'size-val');
   bindSlider('opt-opacity', 'opacity-val');
   bindSlider('opt-speed', 'speed-val');
-  bindSlider('opt-walk-speed', 'walk-speed-val');
   bindSlider('opt-threshold', 'threshold-val');
 
-  // ─── 关闭 ───
-  document.getElementById('close-btn').addEventListener('click', () => {
-    saveAndClose();
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') saveAndClose();
-  });
+  // ─── 自定义关闭（先保存再关闭）───
+  window._panelCloseHandler = saveAndClose;
 
   function saveAndClose() {
-    // 收集所有设置
-    const settings = {
-      autoLaunch: document.getElementById('opt-auto-launch').checked,
-      multiDisplay: document.getElementById('opt-multi-display').checked,
-      tray: document.getElementById('opt-tray').checked,
-      name: document.getElementById('opt-name').value.trim(),
-      personality: document.getElementById('opt-personality').value,
-      size: document.getElementById('opt-size').value,
-      opacity: document.getElementById('opt-opacity').value,
-      speed: document.getElementById('opt-speed').value,
-      alwaysTop: document.getElementById('opt-always-top').checked,
-      clickReact: document.getElementById('opt-click-react').checked,
-      autoWalk: document.getElementById('opt-auto-walk').checked,
-      autoTalk: document.getElementById('opt-auto-talk').checked,
-      eyeTrack: document.getElementById('opt-eye-track').checked,
-      walkSpeed: document.getElementById('opt-walk-speed').value,
-      hungerAlert: document.getElementById('opt-hunger-alert').checked,
-      sickAlert: document.getElementById('opt-sick-alert').checked,
-      levelupAlert: document.getElementById('opt-levelup-alert').checked,
-      threshold: document.getElementById('opt-threshold').value,
-    };
-
-    // 保存到 Electron 主进程
-    if (window.petAPI) {
-      window.petAPI.saveSettings(settings);
+    function clampSlider(el, min, max) {
+      const v = Number(el.value);
+      if (!el || !Number.isFinite(v)) return min;
+      return Math.max(min, Math.min(max, v));
     }
 
-    // 动画关闭
+    const settings = {
+      sfx: document.getElementById('opt-sfx').checked,
+      sfxVolume: clampSlider(document.getElementById('opt-sfx-volume'), 0, 100),
+      bgm: document.getElementById('opt-bgm').checked,
+      bgmVolume: clampSlider(document.getElementById('opt-bgm-volume'), 0, 100),
+      size: clampSlider(document.getElementById('opt-size'), 60, 200),
+      opacity: clampSlider(document.getElementById('opt-opacity'), 40, 100),
+      speed: clampSlider(document.getElementById('opt-speed'), 50, 200),
+      alwaysTop: document.getElementById('opt-alwaysTop').checked,
+      autoLaunch: document.getElementById('opt-autoLaunch').checked,
+      hungerAlert: document.getElementById('opt-hungerAlert').checked,
+      sickAlert: document.getElementById('opt-sickAlert').checked,
+      levelupAlert: document.getElementById('opt-levelupAlert').checked,
+      threshold: clampSlider(document.getElementById('opt-threshold'), 10, 50),
+      autoTalk: document.getElementById('opt-autoTalk').checked,
+    };
+
+    if (window.petAPI) {
+      try { window.petAPI.saveSettings(settings); } catch (err) {
+        console.error('保存设置失败:', err);
+      }
+    }
+
     const panel = document.getElementById('settings-panel');
     panel.classList.add('dp-panel-exit');
     setTimeout(() => {
@@ -394,11 +371,10 @@ body {
     }, 200);
   }
 
-  // ─── 入场动画监听 ───
+  // ─── 加载已保存设置 ───
   if (window.petAPI) {
     window.petAPI.getSettings().then(saved => {
       if (saved && typeof saved === 'object') {
-        // 恢复设置值
         for (const [key, val] of Object.entries(saved)) {
           const el = document.getElementById('opt-' + key);
           if (el) {
@@ -407,23 +383,76 @@ body {
           }
         }
         // 同步滑块显示
-        ['opt-size','opt-opacity','opt-speed','opt-walk-speed','opt-threshold'].forEach(id => {
-          const slider = document.getElementById(id);
-          const display = document.getElementById(id.replace('opt-', '') + '-val');
+        [
+          ['opt-sfx-volume', 'sfx-volume-val'],
+          ['opt-bgm-volume', 'bgm-volume-val'],
+          ['opt-size', 'size-val'],
+          ['opt-opacity', 'opacity-val'],
+          ['opt-speed', 'speed-val'],
+          ['opt-threshold', 'threshold-val'],
+        ].forEach(([sid, did]) => {
+          const slider = document.getElementById(sid);
+          const display = document.getElementById(did);
           if (slider && display) display.textContent = slider.value + '%';
         });
       }
     }).catch(() => {});
 
-    window.petAPI.onPanelAnimateIn(() => {
-      document.getElementById('settings-panel').style.animation = 'dp-panel-in 200ms ease-out';
-    });
+    // ─── 动态获取版本号 ───
+    window.petAPI.getVersion().then(ver => {
+      const verEl = document.getElementById('about-ver');
+      if (verEl && ver) verEl.textContent = 'v' + ver;
+    }).catch(() => {});
 
-    window.petAPI.onPanelAnimateOut(() => {
-      document.getElementById('settings-panel').classList.add('dp-panel-exit');
+    // ─── 动态获取项目路径 ───
+    window.petAPI.getAppPath().then(appPath => {
+      const pathEl = document.getElementById('about-path');
+      if (pathEl && appPath) pathEl.textContent = appPath;
+    }).catch(() => {});
+  }
+
+  // ─── 重置存档 ───
+  const resetBtn = document.getElementById('btn-reset-save');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', async () => {
+      // 二次确认
+      const confirmed = confirm('⚠️ 确定要重置存档吗？\n\n这将清除所有存档数据（等级、金币、道具、签到、成就等），恢复到初始状态。\n\n此操作不可撤销！');
+      if (!confirmed) return;
+
+      // 三秒内再次确认
+      const confirmed2 = confirm('最后确认：真的要重置吗？\n\n点击"确定"将立即清除所有数据。');
+      if (!confirmed2) return;
+
+      resetBtn.disabled = true;
+      resetBtn.textContent = '重置中...';
+
+      try {
+        const result = await window.petAPI.resetSave();
+        if (result?.success) {
+          resetBtn.textContent = '✅ 重置完成';
+          setTimeout(() => {
+            resetBtn.textContent = '⚠️ 重置存档';
+            resetBtn.disabled = false;
+          }, 2000);
+        } else {
+          resetBtn.textContent = '❌ 重置失败';
+          setTimeout(() => {
+            resetBtn.textContent = '⚠️ 重置存档';
+            resetBtn.disabled = false;
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('重置存档失败:', err);
+        resetBtn.textContent = '❌ 重置失败';
+        setTimeout(() => {
+          resetBtn.textContent = '⚠️ 重置存档';
+          resetBtn.disabled = false;
+        }, 2000);
+      }
     });
   }
 })();
 </script>
+<script src="../components/panel-common.js"></script>
 </body>
 </html>

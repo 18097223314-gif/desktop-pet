@@ -1,40 +1,160 @@
 {
-  "name": "cat",
-  "displayName": "猫咪",
-  "version": "1.0",
-  "frameSize": {
-    "width": 64,
-    "height": 64
+  "meta": {
+    "source": "last-tick.itch.io/animated-pixel-cats-64x64",
+    "author": "Last tick",
+    "license": "Free for personal and commercial use. Reselling/redistributing prohibited.",
+    "tileSize": 64,
+    "columns": 14,
+    "totalRows": 72,
+    "totalFrames": 1008,
+    "animations": 56,
+    "characters": {
+      "cat1": {
+        "file": "spritesheet.png",
+        "color": "ginger",
+        "description": "橘猫"
+      },
+      "cat2": {
+        "file": "spritesheet-cat2.png",
+        "color": "white",
+        "description": "白猫"
+      },
+      "cat3": {
+        "file": "spritesheet-cat3.png",
+        "color": "black",
+        "description": "黑猫"
+      }
+    }
   },
-  "offset": {
-    "x": 0,
-    "y": 0
-  },
-  "animations": {
+  "rowMap": {
     "idle": {
-      "file": "idle.svg",
-      "frames": 4,
-      "fps": 8
+      "startRow": 0,
+      "endRow": 0,
+      "frames": 1,
+      "loop": false,
+      "fps": 1
     },
     "walk": {
-      "file": "walk.svg",
-      "frames": 6,
-      "fps": 10
+      "startRow": 4,
+      "endRow": 7,
+      "frames": 30,
+      "loop": true,
+      "fps": 5,
+      "rowStep": 1
     },
-    "sit": {
-      "file": "sit.svg",
-      "frames": 2,
+    "turn": {
+      "startRow": 6,
+      "endRow": 7,
+      "frames": 17,
+      "loop": false,
       "fps": 4
     },
-    "sleep": {
-      "file": "sleep.svg",
-      "frames": 3,
+    "sit": {
+      "startRow": 8,
+      "endRow": 9,
+      "frames": 8,
+      "loop": true,
       "fps": 3
     },
-    "dragged": {
-      "file": "dragged.svg",
-      "frames": 2,
+    "sprint": {
+      "startRow": 10,
+      "endRow": 11,
+      "frames": 10,
+      "loop": true,
+      "fps": 8
+    },
+    "begin": {
+      "startRow": 12,
+      "endRow": 12,
+      "frames": 14,
+      "loop": false,
+      "fps": 4
+    },
+    "scratch": {
+      "startRow": 17,
+      "endRow": 17,
+      "frames": 14,
+      "loop": false,
+      "fps": 0.5
+    },
+    "scratch2": {
+      "startRow": 18,
+      "endRow": 18,
+      "frames": 14,
+      "loop": true,
+      "fps": 4
+    },
+    "run": {
+      "startRow": 28,
+      "endRow": 31,
+      "frames": 56,
+      "loop": true,
       "fps": 6
+    },
+    "sleep": {
+      "startRow": 44,
+      "endRow": 47,
+      "frames": 56,
+      "loop": true,
+      "fps": 3
+    },
+    "sleep2": {
+      "startRow": 48,
+      "endRow": 51,
+      "frames": 56,
+      "loop": true,
+      "fps": 3
+    },
+    "sleep3": {
+      "startRow": 52,
+      "endRow": 55,
+      "frames": 56,
+      "loop": true,
+      "fps": 3
+    }
+  },
+  "stateMap": {
+    "idle": "idle",
+    "walk": "walk",
+    "run": "sprint",
+    "sleep": "sleep",
+    "dragged": "run",
+    "sit": "sit"
+  },
+  "stateTransitions": {
+    "idle→sleep": {
+      "transition": "begin",
+      "thenLoop": "sleep"
+    },
+    "idle→walk": {
+      "direct": true
+    },
+    "idle→run": {
+      "direct": true
+    },
+    "walk→idle": {
+      "direct": true
+    },
+    "run→idle": {
+      "direct": true
+    },
+    "sleep→idle": {
+      "direct": true
+    },
+    "idle→sit": {
+      "direct": true
+    },
+    "sit→idle": {
+      "direct": true
+    },
+    "walk→run": {
+      "direct": true
+    },
+    "run→walk": {
+      "direct": true
+    },
+    "sit→walk": {
+      "direct": true
     }
   }
 }

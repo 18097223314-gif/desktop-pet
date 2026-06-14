@@ -1,0 +1,47 @@
+{
+  "menu": {
+    "sleep": "睡觉",
+    "status": "状态",
+    "inventory": "道具包",
+    "signIn": "签到",
+    "work": "打工",
+    "miniGame": "小游戏",
+    "settings": "设置",
+    "quit": "退出",
+    "show": "显示爪爪",
+    "hide": "隐藏爪爪",
+    "settingsSound": "声音设置",
+    "settingsDisplay": "显示设置",
+    "settingsNotify": "通知设置",
+    "settingsAbout": "关于"
+  },
+  "pet": {
+    "hungry": "好饿啊...",
+    "tired": "累了，想休息...",
+    "sick": "身体不舒服...",
+    "bored": "好无聊...",
+    "happy": "今天真开心！",
+    "levelUp": "升级了！"
+  },
+  "work": {
+    "started": "{name}工作已开始，预计{time}后完成",
+    "finished": "{name}工作完成！获得{gold}金币",
+    "leaflet": "发传单",
+    "waiter": "当服务员",
+    "delivery": "快递员",
+    "actor": "表演者",
+    "explorer": "探险家",
+    "teacher": "家庭教师",
+    "researcher": "研究员",
+    "adventurer": "冒险者"
+  },
+  "game": {
+    "rps": "猜拳",
+    "catchFood": "食物反应",
+    "memory": "记忆翻牌",
+    "rhythm": "节奏点击",
+    "win": "赢了！",
+    "lose": "输了...",
+    "draw": "平局"
+  }
+}

@@ -5,7 +5,7 @@
 
 'use strict';
 
-const { SKILLS, SKILL_CONFIGS, EVOLUTION_BRANCHES } = require('./constants');
+const { SKILLS, SKILL_CONFIGS, EVOLUTION_BRANCHES, SKILL_EXP_BASE } = require('./constants');
 
 class SkillSystem {
   /**
@@ -30,10 +30,7 @@ class SkillSystem {
     }
 
     // 获取当前技能信息
-    const skill = this.db.get(
-      'SELECT * FROM pet_skills WHERE pet_id = ? AND skill_type = ?',
-      petId, skillType
-    );
+    const skill = this.db.get('SELECT * FROM pet_skills WHERE pet_id = ? AND skill_type = ?', petId, skillType);
     if (!skill) {
       return { success: false, message: '技能未解锁', expGain: 0, levelUp: false, newLevel: 0 };
     }
@@ -51,11 +48,12 @@ class SkillSystem {
     // 学习技能加成
     const studyingSkill = this.db.get(
       'SELECT level FROM pet_skills WHERE pet_id = ? AND skill_type = ?',
-      petId, SKILLS.STUDYING
+      petId,
+      SKILLS.STUDYING,
     );
     if (studyingSkill && skillType !== SKILLS.STUDYING) {
       const studyingConfig = SKILL_CONFIGS[SKILLS.STUDYING];
-      expGain *= (1 + studyingSkill.level * studyingConfig.bonusPerLevel);
+      expGain *= 1 + studyingSkill.level * studyingConfig.bonusPerLevel;
     }
 
     expGain = Math.round(expGain * 100) / 100; // 保留2位小数
@@ -74,13 +72,18 @@ class SkillSystem {
 
       this.db.run(
         'UPDATE pet_skills SET level = ?, exp = ?, used_count = used_count + 1 WHERE pet_id = ? AND skill_type = ?',
-        newLevel, remainingExp, petId, skillType
+        newLevel,
+        remainingExp,
+        petId,
+        skillType,
       );
       levelUp = true;
     } else {
       this.db.run(
         'UPDATE pet_skills SET exp = ?, used_count = used_count + 1 WHERE pet_id = ? AND skill_type = ?',
-        newExp, petId, skillType
+        newExp,
+        petId,
+        skillType,
       );
     }
 
@@ -90,7 +93,7 @@ class SkillSystem {
       this.db.run(
         'INSERT INTO event_log (user_id, event_type, event_data) VALUES (1, ?, ?)',
         eventType,
-        JSON.stringify({ skillType, expGain, levelUp, newLevel, context })
+        JSON.stringify({ skillType, expGain, levelUp, newLevel, context }),
       );
     } catch (err) {
       console.error('[Skill] 日志记录失败:', err.message);
@@ -98,9 +101,7 @@ class SkillSystem {
 
     return {
       success: true,
-      message: levelUp
-        ? `${config.name} 升级了！当前等级: ${newLevel}`
-        : `${config.name} 经验+${expGain}`,
+      message: levelUp ? `${config.name} 升级了！当前等级: ${newLevel}` : `${config.name} 经验+${expGain}`,
       expGain,
       levelUp,
       newLevel,
@@ -114,10 +115,7 @@ class SkillSystem {
    * @returns {number} 加成倍率（1.0 = 无加成）
    */
   getBonus(petId, skillType) {
-    const skill = this.db.get(
-      'SELECT level FROM pet_skills WHERE pet_id = ? AND skill_type = ?',
-      petId, skillType
-    );
+    const skill = this.db.get('SELECT level FROM pet_skills WHERE pet_id = ? AND skill_type = ?', petId, skillType);
 
     if (!skill) return 1.0;
 
@@ -133,12 +131,9 @@ class SkillSystem {
    * @returns {Array} 技能列表
    */
   getAllSkills(petId) {
-    const skills = this.db.all(
-      'SELECT * FROM pet_skills WHERE pet_id = ?',
-      petId
-    );
+    const skills = this.db.all('SELECT * FROM pet_skills WHERE pet_id = ?', petId);
 
-    return skills.map(skill => {
+    return skills.map((skill) => {
       const config = SKILL_CONFIGS[skill.skill_type] || {};
       const nextLevelExp = this._getExpForSkillLevel(skill.level + 1);
 
@@ -152,7 +147,7 @@ class SkillSystem {
         nextLevelExp: nextLevelExp,
         expProgress: nextLevelExp > 0 ? Math.min(1, skill.exp / nextLevelExp) : 1,
         bonusPerLevel: config.bonusPerLevel || 0,
-        currentBonus: config.bonusPerLevel ? (1 + skill.level * config.bonusPerLevel) : 1,
+        currentBonus: config.bonusPerLevel ? 1 + skill.level * config.bonusPerLevel : 1,
         usedCount: skill.used_count,
       };
     });
@@ -166,8 +161,8 @@ class SkillSystem {
    * @private
    */
   _getExpForSkillLevel(level) {
-    if (level <= 1) return 50;
-    return Math.floor(50 * Math.pow(level, 1.2));
+    if (level <= 1) return SKILL_EXP_BASE;
+    return Math.floor(SKILL_EXP_BASE * Math.pow(level, 1.2));
   }
 
   // ══════════════════════════════════════════════
@@ -186,10 +181,7 @@ class SkillSystem {
     const skillId = `evo_${evolutionTypeId}_${skillConfig.type}`;
 
     // 幂等插入：先检查是否已存在
-    const existing = this.db.get(
-      'SELECT * FROM pet_skills WHERE pet_id = ? AND skill_type = ?',
-      petId, skillId
-    );
+    const existing = this.db.get('SELECT * FROM pet_skills WHERE pet_id = ? AND skill_type = ?', petId, skillId);
 
     if (existing) {
       console.log(`[Skill] 进化技能已存在: ${skillId}`);
@@ -199,7 +191,8 @@ class SkillSystem {
     // 插入新技能，初始等级 1，经验 0
     this.db.run(
       'INSERT INTO pet_skills (pet_id, skill_type, level, exp, used_count) VALUES (?, ?, 1, 0, 0)',
-      petId, skillId
+      petId,
+      skillId,
     );
 
     console.log(`[Skill] 进化技能已注册: ${skillId} (等级1)`);

@@ -10,7 +10,7 @@ AIGC:
 ---
 # 爪爪桌宠 — 技术架构文档
 
-> 版本：v1.1 | 日期：2026-06-01 | 作者：张牧之 | 修订：基于v1.0补充安全、测试、性能、Steam集成等关键设计
+> 版本：v1.2 | 日期：2026-06-01 | 作者：张牧之口述 | 执笔：马维斯 | 修订：基于v1.1补充安全、测试、性能、Steam集成等关键设计
 
 ---
 
@@ -148,6 +148,38 @@ AIGC:
 - animation-system 监听行为变化，切换精灵图状态
 - 优先级：dragged > sleep > sit > walk > idle
 
+### 4.1-bis 双引擎架构与状态同步
+
+⚠️ **现状说明**：项目实际存在两套独立的状态系统，v1.0 尚未打通。
+
+#### 前端引擎（pet-engine.js）
+
+- 位置：`assets/pet-engine.js`（457 行）
+- 持久化：localStorage
+- 通信方式：事件驱动（EventEmitter）
+- 职责：前端即时状态管理、属性衰减、道具效果、UI 响应
+- 状态字段：`hunger, energy, mood, cleanliness, health, coins, gems, level, exp`
+
+#### 后端引擎（pet-ai.js）
+
+- 位置：`src/main/pet-ai.js`（969 行）
+- 持久化：SQLite（pet_status 表）
+- 通信方式：Electron IPC
+- 职责：行为树决策、全局定时衰减、存档持久化、跨会话恢复
+- 状态字段：`hunger, hygiene, mood, stamina, emotion, state, is_sick, sick_since`
+
+#### 状态同步策略（Phase 2 待实现）
+
+| 规则 | 说明 |
+|------|------|
+| 权威源 | `pet-ai.js` 为状态权威源，`pet-engine.js` 为前端缓存镜像 |
+| 单向推送 | `pet-ai.js` → IPC → `pet-engine.js`：每次 tick 后推送全量状态 |
+| 用户操作 | 前端操作（喂食/玩耍/清洁）→ IPC invoke → 后端处理 → 推送更新 |
+| 离线回退 | 后端断开时前端引擎继续工作，重连后后端状态覆盖前端 |
+| 字段映射 | `energy↔stamina`、`cleanliness↔hygiene`、`mood↔mood`（仅 mood 一致） |
+
+> ⚠️ 当前 status-bar.js（renderer/components/status-bar.js）使用前端字段名（happy/mood/energy/cleanliness），但 IPC 推送将来自后端字段名（mood/stamina/hygiene）。字段映射表已列入 Phase 2 修复清单。
+
 ### 4.2 安全层设计
 
 **IPC 安全**：
@@ -166,6 +198,11 @@ function validateIPC(action, params) {
 }
 ```
 
+**preload.js 白名单强制校验**：
+- `preload.js` 中通过 `contextBridge.exposeInMainWorld` 暴露的每个 IPC invoke 通道，必须在 `security.js` 的 `ALLOWED_ACTIONS` 中存在对应条目
+- 建议 CI 加入 lint 规则：扫描 preload.js 的 `ipcRenderer.invoke` 调用，与 security.js 白名单做 diff，不匹配则报错
+- 避免"preload 加了新通道但忘记同步白名单 → 运行时被静默拦截 → 前端功能异常无报错"
+
 **序列化防护**：
 - 所有 IPC 消息强制 JSON.parse 前检查长度（<10KB）
 - 禁止传递函数、正则表达式、原型链对象
@@ -178,35 +215,47 @@ function validateIPC(action, params) {
 
 ### 4.3 数据库核心表结构
 
-**pet_profile**：
+> 以下为当前代码实际使用的表结构（基于 pet-ai.js getStatus() 返回结构）。
+
+**pet_status**（单行，宠物唯一状态记录）：
 ```sql
 id INTEGER PRIMARY KEY,
-character TEXT DEFAULT 'cat',  -- 当前角色
-name TEXT DEFAULT '爪爪',
+hunger INTEGER DEFAULT 100,      -- 饱食度 0-100
+hygiene INTEGER DEFAULT 100,     -- 清洁度 0-100
+mood INTEGER DEFAULT 100,        -- 心情值 0-100
+stamina INTEGER DEFAULT 100,     -- 体力值 0-100
+coins INTEGER DEFAULT 100,       -- 金币
+gems INTEGER DEFAULT 0,          -- 钻石
+vouchers INTEGER DEFAULT 0,      -- 好感币
 level INTEGER DEFAULT 1,
 exp INTEGER DEFAULT 0,
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+emotion TEXT DEFAULT 'idle',     -- 情绪状态：idle/happy/sad/excited/sleepy/angry
+state TEXT DEFAULT 'idle',       -- 行为状态：idle/walk/sit/sleep
+is_sick INTEGER DEFAULT 0,       -- 是否生病 0/1
+sick_since TEXT,                 -- 生病时间戳
+personality TEXT,                -- JSON 字符串：性格参数
+last_tick TEXT,                  -- 最后一次 tick 时间
+created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 ```
 
-**pet_stats**：
+**inventory**：
 ```sql
-pet_id INTEGER REFERENCES pet_profile(id),
-hunger INTEGER CHECK(hunger BETWEEN 0 AND 100),
-energy INTEGER CHECK(energy BETWEEN 0 AND 100),
-mood INTEGER CHECK(mood BETWEEN 0 AND 100),
-updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+id INTEGER PRIMARY KEY,
+item_id TEXT NOT NULL,           -- 道具 ID
+quantity INTEGER DEFAULT 0,      -- 数量
+acquired_at TEXT DEFAULT CURRENT_TIMESTAMP
 ```
 
-**economy**：
+**economy 交易记录**：
 ```sql
-pet_id INTEGER REFERENCES pet_profile(id),
-coins INTEGER DEFAULT 100,
-gems INTEGER DEFAULT 10,
-vouchers INTEGER DEFAULT 0,
-last_daily_reset TIMESTAMP
+id INTEGER PRIMARY KEY,
+type TEXT NOT NULL,              -- 交易类型：earn/spend
+currency TEXT NOT NULL,          -- 币种：gold/gem/voucher
+amount INTEGER NOT NULL,
+reason TEXT,                     -- 交易原因
+created_at TEXT DEFAULT CURRENT_TIMESTAMP
 ```
-
-**完整 ER 图见 `docs/er-diagram.md`**
 
 ## 五、角色系统设计
 
@@ -304,7 +353,7 @@ class MockIPC {
 
 1. **CPU 高**：降低 pet-ai 评估频率（5秒→10秒），暂停非核心定时器
 2. **内存高**：清理 SQLite 预编译语句缓存，释放 Canvas 离屏缓存
-3. **帧率低**：减少精灵图帧数（6帧→4帧），关闭阴影模糊效果
+3. **帧率低**：减少精灵图帧数（6帧→4帧），关闭阴影模糊效果（精灵图接入 Phase 2 后生效；当前 SVG 动画阶段等效策略为降低 CSS 动画复杂度）
 4. **查询慢**：启用数据库查询缓存，批量合并更新
 
 ### 7.3 性能基线
@@ -432,6 +481,7 @@ Phase 3 — 小游戏实装 + 测试框架
 
 Phase 4 — Steam适配 + 性能监控
   ├─ electron-builder打包配置
+  ├─ **greenworks编译链预验证**（需 VS + Steamworks SDK + node-gyp，国内网络环境不友好，建议 Phase 3 提前在目标机器上完整跑通编译流程，避免 Phase 4 卡进度）
   ├─ greenworks集成（成就/云存档/创意工坊）
   ├─ performance.js 基线测量 + 降级策略
   ├─ i18n.js 多语言支持
@@ -528,16 +578,15 @@ Phase 6 — 服务端扩展（远期）
 - Electron DevTools（F12）查看元素实际渲染状态
 - 代码审查抓不了视觉问题，必须看运行效果
 
-### 13.3 AI分工
+### 13.3 AI分工（三人组）
 
-| 角色 | 工具 | 职责 |
-|------|------|------|
-| 主力编码 | 天工SkyClaw-v1.0 | 日常编码、模块开发 |
-| 架构审查 | 张牧之 | 架构设计、业务逻辑、关键决策 |
-| 深度审查 | 灵光 | 关键模块安全审查 |
-| 日常扫描 | 千问 | 语法/边界/规范 |
+| 角色 | 称呼 | 职责 | 不干 |
+|------|------|------|------|
+| 架构决策 | 张牧之 | 出主意、定架构、拍板、调度 | 不写代码、不改文档 |
+| 主力编码 | 爪爪 | 写代码、本地执行、模块实现 | 不做架构决策 |
+| 审计文档 | 马维斯 | 代码审查、技术文档编写与维护 | 不出代码 |
 
-三个意见交叉验证，两个以上说有问题再改。
+**协作模式**：张牧之口述决策 → 爪爪编码执行 → 马维斯审查/文档，两条线并行（如马维斯复查P0链路时爪爪同时推面板接入链）。
 
 ## 十四、已知问题
 

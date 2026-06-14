@@ -37,7 +37,8 @@ class SignInSystem {
       // 首次签到：插入记录
       this.db.run(
         'INSERT INTO sign_in (user_id, last_sign_date, consecutive_days, total_days) VALUES (?, ?, 1, 1)',
-        userId, today
+        userId,
+        today,
       );
     } else {
       // 检查今天是否已签到
@@ -45,7 +46,7 @@ class SignInSystem {
         return {
           success: false,
           message: '今天已经签到过了',
-          consecutiveDays: signInfo.consecutive_days,
+          consecutiveDays: signInfo.consecutive_days || 0,
           reward: {},
           todaySigned: true,
         };
@@ -54,18 +55,21 @@ class SignInSystem {
       // 判断是否连续（checkStreak 已处理断签重置，这里只需 +1）
       const yesterday = this._getYesterdayStr();
       const isConsecutive = signInfo.last_sign_date === yesterday;
-      const newConsecutive = isConsecutive ? signInfo.consecutive_days + 1 : 1;
+      const newConsecutive = isConsecutive ? (signInfo.consecutive_days || 0) + 1 : 1;
       const newTotal = signInfo.total_days + 1;
 
       this.db.run(
         'UPDATE sign_in SET last_sign_date = ?, consecutive_days = ?, total_days = ? WHERE user_id = ?',
-        today, newConsecutive, newTotal, userId
+        today,
+        newConsecutive,
+        newTotal,
+        userId,
       );
     }
 
     // 获取更新后的签到信息
     const updatedInfo = this.db.get('SELECT * FROM sign_in WHERE user_id = ?', userId);
-    const consecutiveDays = updatedInfo.consecutive_days;
+    const consecutiveDays = updatedInfo ? updatedInfo.consecutive_days : 1;
 
     // 计算奖励（基于新的连续天数）
     const reward = this._calculateReward(consecutiveDays);
@@ -77,7 +81,9 @@ class SignInSystem {
     try {
       this.db.run(
         'INSERT INTO event_log (user_id, event_type, event_data) VALUES (?, ?, ?)',
-        userId, 'sign_in', JSON.stringify({ consecutiveDays, reward })
+        userId,
+        'sign_in',
+        JSON.stringify({ consecutiveDays, reward }),
       );
     } catch (err) {
       console.error('[SignIn] 日志记录失败:', err.message);
@@ -112,20 +118,34 @@ class SignInSystem {
     }
 
     const today = this._getTodayStr();
+    const yesterday = this._getYesterdayStr();
     const todaySigned = info.last_sign_date === today;
 
-    // 计算下次签到（明天）的奖励
-    const nextDay = info.consecutive_days + (todaySigned ? 0 : 1);
-    const nextConsecutive = todaySigned ? info.consecutive_days + 1 : (nextDay > 0 ? nextDay : 1);
+    // 断签检测：last_sign_date 既不是今天也不是昨天 → 连续天数已断
+    const streakBroken = !todaySigned && info.last_sign_date !== yesterday;
+    const consecutiveDays = streakBroken ? 0 : info.consecutive_days || 0;
+
+    // 计算下次签到时的连续天数（用于预览奖励）
+    let nextConsecutive;
+    if (todaySigned) {
+      // 今天已签到，下次签到是明天，连续 +1
+      nextConsecutive = consecutiveDays + 1;
+    } else if (streakBroken) {
+      // 断签了，下次签到重置为 1
+      nextConsecutive = 1;
+    } else {
+      // 昨天签了今天没签（连续未断），下次签到 +1
+      nextConsecutive = consecutiveDays + 1;
+    }
     const nextReward = this._calculateReward(nextConsecutive);
 
     return {
-      consecutiveDays: info.consecutive_days,
-      totalDays: info.total_days,
+      consecutiveDays,
+      totalDays: info.total_days || 0,
       todaySigned,
       lastSignDate: info.last_sign_date,
-      nextReward: todaySigned ? this._calculateReward(info.consecutive_days + 1) : this._calculateReward(info.consecutive_days + 1),
-      milestones: this._getMilestones(info.consecutive_days),
+      nextReward,
+      milestones: this._getMilestones(consecutiveDays),
     };
   }
 
@@ -146,28 +166,27 @@ class SignInSystem {
 
     // 如果今天已签到，不需要检查
     if (info.last_sign_date === today) {
-      return { wasStreakBroken: false, previousStreak: info.consecutive_days };
+      return { wasStreakBroken: false, previousStreak: info.consecutive_days || 0 };
     }
 
     // 如果上次签到是昨天，连续签到仍然有效
     if (info.last_sign_date === yesterday) {
-      return { wasStreakBroken: false, previousStreak: info.consecutive_days };
+      return { wasStreakBroken: false, previousStreak: info.consecutive_days || 0 };
     }
 
     // 断签：上次签到既不是今天也不是昨天 → 重置连续天数
-    const previousStreak = info.consecutive_days;
+    const previousStreak = info.consecutive_days || 0;
 
     // 断签惩罚：重置连续天数为0（下次签到时变为1），不扣除任何东西
-    this.db.run(
-      'UPDATE sign_in SET consecutive_days = 0 WHERE user_id = ?',
-      userId
-    );
+    this.db.run('UPDATE sign_in SET consecutive_days = 0 WHERE user_id = ?', userId);
 
     // 记录断签日志
     try {
       this.db.run(
         'INSERT INTO event_log (user_id, event_type, event_data) VALUES (?, ?, ?)',
-        userId, 'streak_broken', JSON.stringify({ previousStreak })
+        userId,
+        'streak_broken',
+        JSON.stringify({ previousStreak }),
       );
     } catch (err) {
       console.error('[SignIn] 断签日志记录失败:', err.message);
@@ -192,7 +211,7 @@ class SignInSystem {
     // 查找匹配的奖励阶梯
     let matched = null;
     const thresholds = Object.keys(SIGNIN_REWARDS_V2)
-      .map(k => parseInt(k, 10))
+      .map((k) => parseInt(k, 10))
       .sort((a, b) => b - a); // 从高到低排序
 
     for (const threshold of thresholds) {
@@ -242,7 +261,7 @@ class SignInSystem {
    */
   _getMilestones(currentDays) {
     const milestones = [1, 3, 7, 15, 30];
-    return milestones.map(day => ({
+    return milestones.map((day) => ({
       day,
       reward: this._calculateReward(day),
       reached: currentDays >= day,

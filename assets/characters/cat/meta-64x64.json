@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "source": "last-tick.itch.io/animated-pixel-cats-64x64",
+    "author": "Last tick",
+    "license": "Free for personal and commercial use. Reselling/redistributing prohibited.",
+    "tileSize": 64,
+    "columns": 14,
+    "totalRows": 72,
+    "totalFrames": 1008,
+    "animations": 56,
+    "characters": {
+      "cat1": { "file": "spritesheet.png", "color": "ginger", "description": "橘猫" },
+      "cat2": { "file": "spritesheet-cat2.png", "color": "white", "description": "白猫" },
+      "cat3": { "file": "spritesheet-cat3.png", "color": "black", "description": "黑猫" }
+    }
+  },
+  "rowMap": {
+    "idle":     { "startRow": 0,  "endRow": 3,  "frames": 56,  "loop": true,  "fps": 8  },
+    "walk":     { "startRow": 4,  "endRow": 7,  "frames": 56,  "loop": true,  "fps": 10 },
+    "begin":    { "startRow": 8,  "endRow": 8,  "frames": 14,  "loop": false, "fps": 8  },
+    "scratch":  { "startRow": 17, "endRow": 17, "frames": 14,  "loop": true,  "fps": 8  },
+    "scratch2": { "startRow": 18, "endRow": 18, "frames": 14,  "loop": true,  "fps": 8  },
+    "run":      { "startRow": 28, "endRow": 31, "frames": 56,  "loop": true,  "fps": 12 },
+    "sleep":    { "startRow": 44, "endRow": 47, "frames": 56,  "loop": true,  "fps": 4  },
+    "sleep2":   { "startRow": 48, "endRow": 51, "frames": 56,  "loop": true,  "fps": 4  },
+    "sleep3":   { "startRow": 52, "endRow": 55, "frames": 56,  "loop": true,  "fps": 4  }
+  },
+  "stateTransitions": {
+    "idle→sleep": { "transition": "begin", "thenLoop": "sleep" },
+    "idle→walk":  { "direct": true },
+    "idle→run":   { "direct": true },
+    "walk→idle":  { "direct": true },
+    "run→idle":   { "direct": true },
+    "sleep→idle": { "direct": true }
+  }
+}

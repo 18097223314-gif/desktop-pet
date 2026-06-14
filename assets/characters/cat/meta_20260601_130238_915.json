@@ -1,0 +1,27 @@
+{
+  "name": "cat",
+  "displayName": "猫咪",
+  "version": "2.0",
+  "spritesheet": "spritesheet.png",
+  "frameSize": { "width": 32, "height": 32 },
+  "columns": 4,
+  "scale": 3,
+  "rowMap": {
+    "idle":    0,
+    "begin":   1,
+    "scratch": 2,
+    "scratch2":3,
+    "sleep":   4,
+    "sleep2":  5,
+    "sleep3":  6,
+    "run":     7,
+    "walk":    8
+  },
+  "animations": {
+    "idle":    { "row": 0, "frames": 4, "fps": 8  },
+    "walk":    { "row": 8, "frames": 4, "fps": 10 },
+    "sit":     { "row": 1, "frames": 4, "fps": 4  },
+    "sleep":   { "row": 4, "frames": 4, "fps": 3  },
+    "dragged": { "row": 7, "frames": 4, "fps": 12 }
+  }
+}
