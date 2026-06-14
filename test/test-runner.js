@@ -393,13 +393,13 @@ function testEconomy() {
       assert.strictEqual(r.success, false);
     });
 
-    test('useItem 服装类不能使用', () => {
+    test('useItem 材料类不能使用', () => {
       const db = new MockDatabase();
       db._seed('users', { id: 1, gold: 100, diamond: 0, heart_coin: 0 });
-      db._seed('items', { id: 'cloth_hat', name: '帽子', type: 'clothing', rarity: 'common', price_gold: 200, price_diamond: 0, effect_type: 'mood', effect_value: 5, is_consumable: 0, max_stack: 1 });
-      db._seed('inventory', { id: 1, user_id: 1, item_id: 'cloth_hat', quantity: 1 });
+      db._seed('items', { id: 'mat_crystal', name: '水晶碎片', type: 'material', rarity: 'common', price_gold: 0, price_diamond: 0, effect_type: null, effect_value: 0, is_consumable: 1, max_stack: 99 });
+      db._seed('inventory', { id: 1, user_id: 1, item_id: 'mat_crystal', quantity: 1 });
       const eco = new Economy(db);
-      const r = eco.useItem(1, 'cloth_hat');
+      const r = eco.useItem(1, 'mat_crystal');
       assert.strictEqual(r.success, false);
     });
   });

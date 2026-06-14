@@ -319,7 +319,7 @@ const ITEM_TYPES = {
   FOOD: 'food',
   TOY: 'toy',
   MEDICINE: 'medicine',
-  CLOTHING: 'clothing',
+  CARE: 'care',
   SPECIAL: 'special',
   MATERIAL: 'material',
 };

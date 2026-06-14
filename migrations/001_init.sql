@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS event_log (
 CREATE TABLE IF NOT EXISTS items (
   id               TEXT    PRIMARY KEY,
   name             TEXT    NOT NULL,
-  type             TEXT    NOT NULL,             -- food/toy/medicine/clothing/special/material
+  type             TEXT    NOT NULL,             -- food/toy/medicine/care/special/material
   rarity           TEXT    NOT NULL DEFAULT 'common',
   price_gold       INTEGER NOT NULL DEFAULT 0,
   price_diamond    INTEGER NOT NULL DEFAULT 0,
@@ -184,81 +184,86 @@ CREATE TABLE IF NOT EXISTS items (
 );
 
 -- ══════════════════════════════════════════════
--- 初始道具数据（50+条）
+-- 初始道具数据
+-- 属性对应规则：
+--   food → hunger（甜品→mood）
+--   toy  → mood（运动类→stamina）
+--   medicine → stamina / heal
+--   care → hygiene（清洁类）
+--   special → exp/gold/affection/special
+--   material → 无效果（合成材料）
 -- ══════════════════════════════════════════════
 
--- ─── 食物类（15种）────────────────────────────
+-- ─── 食物类（15种）── 效果：hunger 为主，甜品 mood ──
 INSERT OR IGNORE INTO items VALUES
-  ('food_kibble',        '猫粮',       'food', 'common',    50,  0, 'hunger',   25, 0, '普通猫粮，填饱肚子', 1, 99),
-  ('food_fish',          '小鱼干',     'food', 'common',    80,  0, 'hunger',   35, 0, '鲜美小鱼干，很受欢迎', 1, 99),
-  ('food_milk',          '牛奶',       'food', 'common',    60,  0, 'mood',     20, 0, '香浓牛奶，心情变好', 1, 99),
-  ('food_bread',         '面包',       'food', 'common',    40,  0, 'hunger',   20, 0, '软乎乎的面包', 1, 99),
-  ('food_cake',          '生日蛋糕',   'food', 'uncommon', 200,  0, 'all_stats',15, 0, '特制生日蛋糕，全属性+15', 1, 10),
-  ('food_sushi',         '寿司',       'food', 'uncommon', 150,  0, 'hunger',   50, 0, '精致寿司，营养丰富', 1, 99),
-  ('food_steak',         '牛排',       'food', 'rare',     300,  0, 'hunger',   70, 0, '高级牛排，大补', 1, 30),
-  ('food_ice_cream',     '冰激凌',     'food', 'common',    90,  0, 'mood',     30, 0, '甜甜的冰激凌', 1, 99),
-  ('food_ramen',         '拉面',       'food', 'uncommon', 120,  0, 'hunger',   45, 0, '热腾腾的拉面', 1, 99),
-  ('food_taiyaki',       '鲷鱼烧',     'food', 'uncommon', 130,  0, 'mood',     35, 0, '形状可爱的鲷鱼烧', 1, 99),
-  ('food_onigiri',       '饭团',       'food', 'common',    55,  0, 'hunger',   22, 0, '方便携带的饭团', 1, 99),
-  ('food_pudding',       '布丁',       'food', 'uncommon', 110,  0, 'mood',     28, 0, 'Q弹布丁', 1, 99),
-  ('food_macarons',      '马卡龙',     'food', 'rare',     250,  0, 'mood',     50, 0, '精致马卡龙，心情大好', 1, 30),
-  ('food_hotpot',        '小火锅',     'food', 'rare',     400,  0, 'hunger',   80, 0, '超级火锅，吃撑了', 1, 20),
-  ('food_galaxy_candy',  '星空糖',     'food', 'epic',       0,  2, 'all_stats',30, 0, '神秘星空糖，全属性+30', 1, 5);
+  ('food_kibble',        '猫粮',       'food', 'common',     50, 0, 'hunger',   25, 0, '普通猫粮，填饱肚子',           1, 99),
+  ('food_bread',         '面包',       'food', 'common',     40, 0, 'hunger',   20, 0, '软乎乎的面包',                 1, 99),
+  ('food_onigiri',       '饭团',       'food', 'common',     55, 0, 'hunger',   22, 0, '方便携带的饭团',               1, 99),
+  ('food_milk',          '牛奶',       'food', 'common',     60, 0, 'hunger',   20, 0, '香浓牛奶，补充能量',           1, 99),
+  ('food_fish',          '小鱼干',     'food', 'common',     80, 0, 'hunger',   35, 0, '鲜美小鱼干，很受欢迎',         1, 99),
+  ('food_ramen',         '拉面',       'food', 'uncommon',  120, 0, 'hunger',   45, 0, '热腾腾的拉面',                 1, 99),
+  ('food_sushi',         '寿司',       'food', 'uncommon',  150, 0, 'hunger',   50, 0, '精致寿司，营养丰富',           1, 99),
+  ('food_steak',         '牛排',       'food', 'rare',      300, 0, 'hunger',   70, 0, '高级牛排，大补',               1, 30),
+  ('food_hotpot',        '小火锅',     'food', 'rare',      400, 0, 'hunger',   80, 0, '超级火锅，吃撑了',             1, 20),
+  ('food_ice_cream',     '冰激凌',     'food', 'common',     90, 0, 'mood',     30, 0, '甜甜的冰激凌，心情变好',       1, 99),
+  ('food_taiyaki',       '鲷鱼烧',     'food', 'uncommon',  130, 0, 'mood',     35, 0, '形状可爱的鲷鱼烧',             1, 99),
+  ('food_pudding',       '布丁',       'food', 'uncommon',  110, 0, 'mood',     28, 0, 'Q弹布丁，甜蜜蜜',              1, 99),
+  ('food_macarons',      '马卡龙',     'food', 'rare',      250, 0, 'mood',     50, 0, '精致马卡龙，心情大好',         1, 30),
+  ('food_cake',          '生日蛋糕',   'food', 'uncommon',  200, 0, 'all_stats',15, 0, '特制生日蛋糕，全属性+15',      1, 10),
+  ('food_galaxy_candy',  '星空糖',     'food', 'epic',        0, 2, 'all_stats',30, 0, '神秘星空糖，全属性+30',        1, 5);
 
--- ─── 玩具类（12种）────────────────────────────
+-- ─── 玩具类（12种）── 效果：mood 为主，运动类 stamina ──
 INSERT OR IGNORE INTO items VALUES
-  ('toy_ball',           '毛线球',     'toy', 'common',    80,  0, 'mood',     20, 300, '经典毛线球，百玩不厌', 0, 1),
-  ('toy_ribbon',         '逗猫棒',     'toy', 'common',   100,  0, 'mood',     25, 300, '带羽毛的逗猫棒', 0, 1),
-  ('toy_balloon',        '气球',       'toy', 'common',    60,  0, 'mood',     15, 180, '彩色气球，快乐源泉', 1, 10),
-  ('toy_rubiks_cube',    '魔方',       'toy', 'uncommon', 200,  0, 'mood',     30, 600, '六面魔方，锻炼智力', 0, 1),
-  ('toy_plush',          '毛绒玩具',   'toy', 'uncommon', 250,  0, 'mood',     35, 0,   '软萌毛绒玩具，陪伴感+1', 0, 1),
-  ('toy_music_box',      '八音盒',     'toy', 'rare',     500,  0, 'mood',     50, 900, '悦耳的音乐盒', 0, 1),
-  ('toy_frisbee',        '飞盘',       'toy', 'uncommon', 180,  0, 'stamina',  20, 300, '飞盘，运动好帮手', 0, 1),
-  ('toy_kite',           '风筝',       'toy', 'uncommon', 220,  0, 'mood',     40, 600, '五彩风筝，飞高高', 0, 1),
-  ('toy_magic_wand',     '魔法棒',     'toy', 'rare',     600,  0, 'mood',     60, 0,   '神秘魔法棒，一挥就开心', 1, 5),
-  ('toy_telescope',      '小望远镜',   'toy', 'rare',     700,  0, 'mood',     45, 900, '观星望远镜', 0, 1),
-  ('toy_puzzle',         '拼图',       'toy', 'uncommon', 300,  0, 'mood',     35, 1200,'复杂拼图，专注力+1', 0, 1),
-  ('toy_bubble_machine', '泡泡机',     'toy', 'rare',     450,  0, 'mood',     55, 600, '吹出无数泡泡', 1, 3);
+  ('toy_balloon',        '气球',       'toy', 'common',      60, 0, 'mood',     15, 180, '彩色气球，快乐源泉',         1, 10),
+  ('toy_ball',           '毛线球',     'toy', 'common',      80, 0, 'mood',     20, 300, '经典毛线球，百玩不厌',       0, 1),
+  ('toy_ribbon',         '逗猫棒',     'toy', 'common',     100, 0, 'mood',     25, 300, '带羽毛的逗猫棒',             0, 1),
+  ('toy_frisbee',        '飞盘',       'toy', 'uncommon',   180, 0, 'stamina',  20, 300, '飞盘，运动好帮手',           0, 1),
+  ('toy_rubiks_cube',    '魔方',       'toy', 'uncommon',   200, 0, 'mood',     30, 600, '六面魔方，锻炼智力',         0, 1),
+  ('toy_plush',          '毛绒玩具',   'toy', 'uncommon',   250, 0, 'mood',     35, 0,   '软萌毛绒玩具，陪伴感满满',   0, 1),
+  ('toy_kite',           '风筝',       'toy', 'uncommon',   220, 0, 'stamina',  25, 600, '五彩风筝，跑跑跳跳',         0, 1),
+  ('toy_puzzle',         '拼图',       'toy', 'uncommon',   300, 0, 'mood',     35, 1200,'复杂拼图，专注力提升',       0, 1),
+  ('toy_bubble_machine', '泡泡机',     'toy', 'rare',       450, 0, 'mood',     45, 600, '吹出无数泡泡',               1, 3),
+  ('toy_music_box',      '八音盒',     'toy', 'rare',       500, 0, 'mood',     50, 900, '悦耳的音乐盒',               0, 1),
+  ('toy_telescope',      '小望远镜',   'toy', 'rare',       700, 0, 'mood',     45, 900, '观星望远镜，探索星空',       0, 1),
+  ('toy_magic_wand',     '魔法棒',     'toy', 'rare',       600, 0, 'mood',     60, 0,   '神秘魔法棒，一挥就开心',     1, 5);
 
--- ─── 药品类（8种）─────────────────────────────
+-- ─── 药品类（8种）── 效果：stamina / heal ──
 INSERT OR IGNORE INTO items VALUES
-  ('medicine_vitamin',   '维生素',     'medicine', 'common',   100, 0, 'stamina',  20, 0, '补充体力维生素', 1, 30),
-  ('medicine_cold',      '感冒药',     'medicine', 'common',   150, 0, 'heal',     50, 0, '治疗感冒专用', 1, 20),
-  ('medicine_tonic',     '滋补汤',     'medicine', 'uncommon', 300, 0, 'all_stats',20, 0, '全面滋补，身体棒棒', 1, 10),
-  ('medicine_elixir',    '长生药水',   'medicine', 'rare',     800, 0, 'all_stats',50, 0, '传说中的长生药水', 1, 5),
-  ('medicine_bandage',   '创可贴',     'medicine', 'common',    50, 0, 'heal',     20, 0, '小伤口快速处理', 1, 50),
-  ('medicine_honey',     '蜂蜜',       'medicine', 'uncommon', 200, 0, 'mood',     40, 0, '甜蜜蜂蜜，心情变好', 1, 20),
-  ('medicine_ginseng',   '人参',       'medicine', 'epic',    2000, 0, 'stamina',  80, 0, '极品人参，大补元气', 1, 3),
-  ('medicine_cure_all',  '万灵药',     'medicine', 'legendary',0,  10, 'all_stats',100,0, '传说中的万灵药', 1, 1);
+  ('medicine_bandage',   '创可贴',     'medicine', 'common',    50, 0, 'heal',     20, 0, '小伤口快速处理',             1, 50),
+  ('medicine_vitamin',   '维生素',     'medicine', 'common',   100, 0, 'stamina',  20, 0, '补充体力维生素',             1, 30),
+  ('medicine_cold',      '感冒药',     'medicine', 'common',   150, 0, 'heal',     50, 0, '治疗感冒专用',               1, 20),
+  ('medicine_honey',     '蜂蜜',       'medicine', 'uncommon', 200, 0, 'stamina',  30, 0, '甜蜜蜂蜜，恢复体力',         1, 20),
+  ('medicine_tonic',     '滋补汤',     'medicine', 'uncommon', 300, 0, 'all_stats',20, 0, '全面滋补，身体棒棒',         1, 10),
+  ('medicine_elixir',    '长生药水',   'medicine', 'rare',     800, 0, 'all_stats',50, 0, '传说中的长生药水',           1, 5),
+  ('medicine_ginseng',   '人参',       'medicine', 'epic',    2000, 0, 'stamina',  80, 0, '极品人参，大补元气',         1, 3),
+  ('medicine_cure_all',  '万灵药',     'medicine', 'legendary',  0,10, 'all_stats',100,0, '传说中的万灵药',             1, 1);
 
--- ─── 服装类（8种）─────────────────────────────
+-- ─── 清洁类（6种）── 效果：hygiene ──
 INSERT OR IGNORE INTO items VALUES
-  ('cloth_hat_strawberry','草莓帽',    'clothing', 'common',   200, 0, 'mood',     5, 0, '可爱草莓帽子', 0, 1),
-  ('cloth_hat_bear',     '熊猫耳朵',  'clothing', 'uncommon', 400, 0, 'mood',     8, 0, '超萌熊猫耳', 0, 1),
-  ('cloth_bow',          '蝴蝶结',    'clothing', 'common',   150, 0, 'mood',     5, 0, '粉色蝴蝶结', 0, 1),
-  ('cloth_scarf',        '围巾',      'clothing', 'uncommon', 350, 0, 'mood',     6, 0, '暖暖围巾', 0, 1),
-  ('cloth_crown',        '皇冠',      'clothing', 'rare',     800, 0, 'mood',    10, 0, '闪闪皇冠', 0, 1),
-  ('cloth_wings',        '天使翅膀',  'clothing', 'rare',    1000, 0, 'mood',    12, 0, '洁白天使翅膀', 0, 1),
-  ('cloth_cloak',        '魔法披风',  'clothing', 'epic',    2500, 0, 'mood',    20, 0, '神秘魔法披风', 0, 1),
-  ('cloth_space_suit',   '宇航服',    'clothing', 'legendary',0,  20, 'mood',    30, 0, '限定宇航服', 0, 1);
+  ('care_wipes',         '湿纸巾',     'care', 'common',      30, 0, 'hygiene',  15, 0, '快速清洁小爪爪',             1, 50),
+  ('care_comb',          '梳子',       'care', 'common',      60, 0, 'hygiene',  20, 0, '梳理毛发，整整齐齐',         1, 30),
+  ('care_shampoo',       '香波',       'care', 'common',     100, 0, 'hygiene',  30, 0, '香喷喷的洗毛液',             1, 20),
+  ('care_bubble_bath',   '泡泡浴',     'care', 'uncommon',   180, 0, 'hygiene',  45, 0, '享受泡泡浴时光',             1, 10),
+  ('care_spa',           '精油SPA',    'care', 'rare',       350, 0, 'hygiene',  60, 0, '高级精油SPA护理',            1, 5),
+  ('care_royal_bath',    '皇家沐浴',   'care', 'rare',       600, 0, 'hygiene',  80, 0, '皇家级沐浴体验',             1, 3);
 
--- ─── 特殊道具（10种）──────────────────────────
+-- ─── 特殊道具（10种）── 效果：exp/gold/affection/special ──
 INSERT OR IGNORE INTO items VALUES
-  ('special_mystery_box',   '神秘礼盒',   'special', 'rare',   500, 0, 'special',  0, 0, '打开有惊喜', 1, 10),
-  ('special_golden_egg',    '黄金蛋',     'special', 'epic',     0, 5, 'special',  0, 0, '孵化黄金蛋', 1, 3),
-  ('special_star_fragment', '星屑碎片',   'special', 'rare',   800, 0, 'exp',    100, 0, '闪亮星屑，大量经验', 1, 10),
-  ('special_time_stone',    '时间之石',   'special', 'epic',     0, 8, 'special',  0, 0, '时间流速加倍', 1, 3),
-  ('special_rare_treasure', '稀有宝箱',   'special', 'epic',     0, 3, 'special',  0, 0, '珍贵宝箱', 1, 5),
-  ('special_heart_crystal', '心意水晶',   'special', 'rare',   600, 0, 'affection',50, 0, '好感度大幅提升', 1, 10),
-  ('special_exp_book',      '经验书',     'special', 'uncommon',300, 0, 'exp',     50, 0, '阅读增加经验', 1, 20),
-  ('special_gold_medal',    '金牌奖章',   'special', 'epic',     0, 0, 'gold',   1000, 0,'兑换1000金币', 1, 5),
-  ('special_rainbow_candy', '彩虹糖',     'special', 'legendary',0, 15, 'all_stats',50, 0,'彩虹糖，超级变变变', 1, 1),
-  ('special_lucky_charm',   '幸运符',     'special', 'rare',   700, 0, 'special',  0, 3600,'持续1小时幸运加成', 1, 5);
+  ('special_exp_book',      '经验书',     'special', 'uncommon', 300, 0, 'exp',       50, 0,    '阅读增加经验',           1, 20),
+  ('special_heart_crystal', '心意水晶',   'special', 'rare',     600, 0, 'affection', 50, 0,    '好感度大幅提升',         1, 10),
+  ('special_gold_medal',    '金牌奖章',   'special', 'epic',       0, 0, 'gold',    1000, 0,    '兑换1000金币',           1, 5),
+  ('special_star_fragment', '星屑碎片',   'special', 'rare',     800, 0, 'exp',      100, 0,    '闪亮星屑，大量经验',     1, 10),
+  ('special_mystery_box',   '神秘礼盒',   'special', 'rare',     500, 0, 'special',    0, 0,    '打开有惊喜',             1, 10),
+  ('special_golden_egg',    '黄金蛋',     'special', 'epic',       0, 5, 'special',    0, 0,    '孵化黄金蛋',             1, 3),
+  ('special_time_stone',    '时间之石',   'special', 'epic',       0, 8, 'special',    0, 0,    '时间流速加倍',           1, 3),
+  ('special_rare_treasure', '稀有宝箱',   'special', 'epic',       0, 3, 'special',    0, 0,    '珍贵宝箱',               1, 5),
+  ('special_rainbow_candy', '彩虹糖',     'special', 'legendary',  0,15, 'all_stats', 50, 0,    '彩虹糖，超级变变变',     1, 1),
+  ('special_lucky_charm',   '幸运符',     'special', 'rare',     700, 0, 'special',    0, 3600, '持续1小时幸运加成',      1, 5);
 
--- ─── 材料类（5种）─────────────────────────────
+-- ─── 材料类（5种）── 无效果，合成用 ──
 INSERT OR IGNORE INTO items VALUES
-  ('material_crystal',    '水晶碎片',   'material', 'uncommon', 0, 0, null, 0, 0, '合成材料', 1, 99),
-  ('material_ancient_gem','远古宝石',   'material', 'rare',     0, 0, null, 0, 0, '稀有合成材料', 1, 30),
-  ('material_star_dust',  '星尘',       'material', 'rare',     0, 0, null, 0, 0, '闪闪发光的星尘', 1, 30),
-  ('material_dragon_scale','龙鳞片',    'material', 'epic',     0, 0, null, 0, 0, '传说中的龙鳞', 1, 10),
-  ('material_moonstone',  '月光石',     'material', 'epic',     0, 0, null, 0, 0, '月光下闪耀的宝石', 1, 10);
+  ('material_crystal',      '水晶碎片',   'material', 'uncommon', 0, 0, null, 0, 0, '合成材料',                   1, 99),
+  ('material_ancient_gem',  '远古宝石',   'material', 'rare',     0, 0, null, 0, 0, '稀有合成材料',               1, 30),
+  ('material_star_dust',    '星尘',       'material', 'rare',     0, 0, null, 0, 0, '闪闪发光的星尘',             1, 30),
+  ('material_dragon_scale', '龙鳞片',     'material', 'epic',     0, 0, null, 0, 0, '传说中的龙鳞',               1, 10),
+  ('material_moonstone',    '月光石',     'material', 'epic',     0, 0, null, 0, 0, '月光下闪耀的宝石',           1, 10);

@@ -174,7 +174,7 @@ class Economy {
 
     // 非消耗品不能"使用"（如服装需装备、材料用于合成）
     // toy 是非消耗品但可以直接使用（反复获得心情加成，不会消耗）
-    if (['material', 'clothing'].includes(item.type)) {
+    if (item.type === 'material') {
       return { success: false, message: '该道具无法直接使用', effects: {} };
     }
 

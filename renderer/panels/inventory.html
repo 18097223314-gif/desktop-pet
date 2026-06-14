@@ -337,13 +337,14 @@ body {
     { id: 'food',     emoji: '🍖', label: '食物' },
     { id: 'toy',      emoji: '🧸', label: '玩具' },
     { id: 'medicine', emoji: '💊', label: '药品' },
+    { id: 'care',     emoji: '🛁', label: '清洁' },
     { id: 'special',  emoji: '⭐', label: '特殊' },
     { id: 'material', emoji: '🔮', label: '材料' },
   ];
 
   const TYPE_ICON = {
     food: '🍖', toy: '🧸', medicine: '💊',
-    special: '✨', material: '💎',
+    care: '🛁', special: '✨', material: '💎',
   };
 
   const EFFECT_NAMES = {
@@ -440,7 +441,7 @@ body {
     const isOwned = owned.some(b => b.item_id === sel.item_id || b.item_id === sel.id);
     console.log('[Inv] sel:', sel.name, 'isOwned:', isOwned, 'type:', sel.type);
     if (isOwned) {
-      if (sel.type !== 'material' && sel.type !== 'clothing') {
+      if (sel.type !== 'material') {
         const btn = document.createElement('button');
         btn.className = 'btn primary';
         btn.textContent = '使用';
