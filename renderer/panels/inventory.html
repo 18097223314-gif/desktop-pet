@@ -15,26 +15,28 @@ body {
   overflow: hidden;
   font-family: var(--dp-font);
 }
-/* 强制覆盖设计系统限制 */
+
+/* 面板填满窗口 + flex 布局 */
 .dp-panel {
-  width: 560px !important;
-  max-height: 460px !important;
-  /* 面板填满窗口 + flex 布局 */
-  .dp-panel {
-    width: 100% !important;
-    height: 100% !important;
-    max-height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.dp-panel-body {
+  flex: 1;
+  min-height: 0;
+  max-height: none !important;
+  overflow-y: auto;
+}
 
 /* ═══ 主布局：左右分栏 ═══ */
 .inv-main {
   display: flex;
   flex: 1;
   min-height: 0;
-  max-height: none !important;
-  overflow-y: auto;
+}
 
 /* ─── 左侧分类栏 ─── */
 .inv-cats {
