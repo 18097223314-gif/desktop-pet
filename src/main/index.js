@@ -183,11 +183,11 @@ function createPanelWindow(panelName, options = {}) {
   // 面板自定义尺寸
   const PANEL_SIZES = {
     inventory: { width: 560, height: 460 },
-    status: { width: 400, height: 350 },
-    work: { width: 480, height: 400 },
+    status: { width: 480, height: 520 },
+    work: { width: 520, height: 480 },
     'mini-game': { width: 520, height: 480 },
     settings: { width: 520, height: 480 },
-    theme: { width: 480, height: 400 },
+    theme: { width: 520, height: 480 },
   };
 
   const size = PANEL_SIZES[panelName] || { width: 520, height: 480 };
