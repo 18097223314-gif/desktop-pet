@@ -35,10 +35,10 @@ INSERT OR IGNORE INTO users (id, name) VALUES (1, '主人');
 -- ─── 宠物状态表 ────────────────────────────────
 CREATE TABLE IF NOT EXISTS pet_status (
   pet_id       INTEGER PRIMARY KEY DEFAULT 1,
-  hunger       INTEGER NOT NULL DEFAULT 80,
-  hygiene      INTEGER NOT NULL DEFAULT 80,
-  mood         INTEGER NOT NULL DEFAULT 80,
-  stamina      INTEGER NOT NULL DEFAULT 80,
+  hunger       INTEGER NOT NULL DEFAULT 100,
+  hygiene      INTEGER NOT NULL DEFAULT 100,
+  mood         INTEGER NOT NULL DEFAULT 100,
+  stamina      INTEGER NOT NULL DEFAULT 100,
   emotion      TEXT    NOT NULL DEFAULT 'normal',
   state        TEXT    NOT NULL DEFAULT 'idle',
   is_sick      INTEGER NOT NULL DEFAULT 0,    -- 0=健康 1=生病

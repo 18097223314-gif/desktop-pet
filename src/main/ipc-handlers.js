@@ -721,7 +721,7 @@ class IPCHandlers {
 
       // 重置宠物状态
       this.db.run(
-        "UPDATE pet_status SET hunger = 80, hygiene = 80, mood = 80, stamina = 80, emotion = 'normal', state = 'idle', is_sick = 0, sick_since = NULL WHERE pet_id = 1",
+        "UPDATE pet_status SET hunger = 100, hygiene = 100, mood = 100, stamina = 100, emotion = 'normal', state = 'idle', is_sick = 0, sick_since = NULL WHERE pet_id = 1",
       );
 
       // 重置技能

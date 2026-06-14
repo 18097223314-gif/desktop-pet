@@ -543,7 +543,7 @@ const EVOLUTION_BRANCHES = {
 const EVOLUTION_BRANCH_IDS = ['fire', 'ice', 'thunder'];
 
 // ─── 属性/用户默认值 ──────────────────────────────
-const DEFAULT_STAT_VALUE = 80; // 初始属性默认值（hunger/hygiene/mood/stamina）
+const DEFAULT_STAT_VALUE = 100; // 初始属性默认值（hunger/hygiene/mood/stamina）
 const INITIAL_GOLD = 500; // 新用户初始金币
 const EVOLUTION_REQUIRED_LEVEL = 20; // 进化等级门槛
 

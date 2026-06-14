@@ -503,7 +503,7 @@ async function initBackendModules() {
     database.run(
       `UPDATE pet_status SET hunger = ${DEFAULT_STAT_VALUE}, hygiene = ${DEFAULT_STAT_VALUE}, mood = ${DEFAULT_STAT_VALUE}, stamina = ${DEFAULT_STAT_VALUE} WHERE pet_id = 1`,
     );
-    console.log('[Test] 金币/钻石已重置为 99999/99，宠物属性已重置为 80');
+    console.log('[Test] 金币/钻石已重置为 99999/99，宠物属性已重置为 100');
   }
 
   // 2. 定时器
