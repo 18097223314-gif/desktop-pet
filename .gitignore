@@ -7,3 +7,13 @@ dist/
 logs/
 *.log
 perf-baseline.json
+
+# 内部工作文档
+SESSION_CONTEXT.md
+ARCHIVE.md
+mini-game-html.txt
+*-changelog.md
+*.env
+.env*
+*.corrupted
+*.db.bak

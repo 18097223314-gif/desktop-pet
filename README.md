@@ -64,7 +64,7 @@ desktop-pet/
 ## 依赖
 
 - Electron ^28.0.0
-- better-sqlite3 ^9.4.3
+- sql.js ^1.14.1
 
 ## 数据库
 
