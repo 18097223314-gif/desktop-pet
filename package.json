@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "electron": "^28.0.0",
+    "electron-builder": "^26.15.3",
     "eslint": "^8.56.0",
     "prettier": "^3.2.0"
   },
@@ -41,6 +42,7 @@
       "renderer/**/*",
       "assets/**/*",
       "data/**/*",
+      "migrations/**/*",
       "package.json"
     ],
     "extraResources": [
@@ -50,8 +52,7 @@
       }
     ],
     "win": {
-      "target": "nsis",
-      "icon": "build/icon.ico"
+      "target": "nsis"
     },
     "nsis": {
       "oneClick": false,

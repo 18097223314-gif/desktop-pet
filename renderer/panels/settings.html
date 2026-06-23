@@ -73,6 +73,36 @@ body {
 .about-info { font-size: 12px; color: var(--dp-text-secondary); line-height: 2; }
 .about-info dt { color: var(--dp-text-muted); font-size: 11px; }
 .about-info dd { margin-bottom: 8px; }
+/* ─── 改名 ─── */
+.rename-row {
+  display: flex; gap: 8px; align-items: center; margin: 12px 0;
+}
+.rename-input {
+  flex: 1; padding: 8px 12px;
+  border: 1px solid var(--dp-border);
+  border-radius: var(--dp-radius-sm);
+  background: var(--dp-bg-card);
+  color: var(--dp-text-primary);
+  font-size: 14px; font-family: var(--dp-font);
+}
+.rename-input:focus { outline: none; border-color: var(--dp-primary); }
+.rename-btn {
+  padding: 8px 16px;
+  border-radius: var(--dp-radius-sm);
+  background: var(--dp-primary);
+  border: none; color: #fff;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: var(--dp-font);
+  transition: all var(--dp-transition-fast);
+  white-space: nowrap;
+}
+.rename-btn:hover { background: var(--dp-primary-dark); }
+.rename-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.rename-hint { font-size: 11px; color: var(--dp-text-muted); margin-top: 4px; }
+.rename-msg { font-size: 12px; margin-top: 6px; min-height: 18px; }
+.rename-msg.ok { color: var(--dp-text-success); }
+.rename-msg.err { color: #ff4457; }
+
 </style>
 </head>
 <body>
@@ -96,6 +126,10 @@ body {
       <div class="dp-nav-item" data-page="notify">
         <img src="../icons/icon-wave.svg" width="16" height="16" class="nav-icon">
         <span>通知</span>
+      </div>
+      <div class="dp-nav-item" data-page="pet">
+        <img src="../icons/icon-heart.svg" width="16" height="16" class="nav-icon">
+        <span>宠物</span>
       </div>
       <div class="dp-nav-item" data-page="about">
         <img src="../icons/icon-heart.svg" width="16" height="16" class="nav-icon">
@@ -279,6 +313,24 @@ body {
         </div>
       </div>
 
+      <!-- ═══ 宠物页 ═══ -->
+      <div class="settings-page" id="page-pet" style="display:none">
+        <h3>宠物设置</h3>
+
+        <div class="dp-setting-row">
+          <div>
+            <div class="dp-setting-label">修改名字</div>
+            <div class="dp-setting-desc">给你的爪爪取个新名字（最多12字）</div>
+          </div>
+        </div>
+        <div class="rename-row">
+          <input type="text" class="rename-input" id="rename-input" maxlength="12" placeholder="输入新名字...">
+          <button class="rename-btn" id="rename-btn">改名</button>
+        </div>
+        <div class="rename-hint">最多12个字符，不可包含 &lt; &gt; " ' &amp;</div>
+        <div class="rename-msg" id="rename-msg"></div>
+      </div>
+
       <!-- ═══ 关于页 ═══ -->
       <div class="settings-page" id="page-about" style="display:none">
         <h3>关于</h3>
@@ -345,6 +397,47 @@ body {
   bindSlider('opt-opacity', 'opacity-val');
   bindSlider('opt-speed', 'speed-val');
   bindSlider('opt-threshold', 'threshold-val');
+
+  // ─── 改名 ───
+  const renameInput = document.getElementById('rename-input');
+  const renameBtn = document.getElementById('rename-btn');
+  const renameMsg = document.getElementById('rename-msg');
+
+  if (renameBtn) {
+    renameBtn.addEventListener('click', async () => {
+      const newName = renameInput.value.trim();
+      renameMsg.className = 'rename-msg';
+      renameMsg.textContent = '';
+
+      if (!newName) { renameMsg.className = 'rename-msg err'; renameMsg.textContent = '[UR-001] 名字不能为空'; return; }
+      if (newName.length > 12) { renameMsg.className = 'rename-msg err'; renameMsg.textContent = '[UR-002] 名字最多12个字符'; return; }
+      if (/[<>"'&]/.test(newName)) { renameMsg.className = 'rename-msg err'; renameMsg.textContent = '[UR-003] 名字包含非法字符'; return; }
+
+      renameBtn.disabled = true;
+      renameBtn.textContent = '保存中...';
+      try {
+        const result = await api.userUpdate({ updates: { name: newName } });
+        if (result && result.success) {
+          renameMsg.className = 'rename-msg ok';
+          renameMsg.textContent = '✅ 改名成功！';
+          renameInput.value = '';
+        } else {
+          renameMsg.className = 'rename-msg err';
+          renameMsg.textContent = result?.error || '[UI-RN] 改名失败';
+        }
+      } catch (err) {
+        renameMsg.className = 'rename-msg err';
+        renameMsg.textContent = '错误: ' + (err.message || 'UI-RN-CATCH');
+        console.error('[Rename] catch:', err);
+      }
+      renameBtn.disabled = false;
+      renameBtn.textContent = '改名';
+    });
+
+    renameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') renameBtn.click();
+    });
+  }
 
   // ─── 自定义关闭（先保存再关闭）───
   window._panelCloseHandler = saveAndClose;

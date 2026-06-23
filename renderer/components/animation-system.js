@@ -74,11 +74,17 @@ const AnimationSystem = (() => {
   // automatically transition to loopAfter
   let oneShotQueue = [];
 
+  // ─── 持久CSS循环动画 ───
+  // 用于dance/sulking等需要持续播放的CSS动画
+  // 行为切换时自动移除上一个循环CSS类
+  let _currentCssLoopClass = null;
+
   // ─── 行为→动画映射 ───
   // Map ALL 16 backend PET_STATES to actual animations
-  // Each entry: { anim: string, loopAfter?: string, oneShot?: boolean, cssOneShot?: {cls, dur} }
+  // Each entry: { anim: string, loopAfter?: string, oneShot?: boolean, cssOneShot?: {cls, dur}, cssLoop?: string }
   //   oneShot=true means sprite-level oneShot (play anim once, then auto-transition to loopAfter)
   //   cssOneShot means CSS class overlay on canvas + immediate sprite switch to anim
+  //   cssLoop means persistent CSS class that loops until behavior changes
   const BEHAVIOR_MAP = {
     idle: { anim: 'idle' },
     walk: { anim: 'walk' },
@@ -89,10 +95,10 @@ const AnimationSystem = (() => {
     wash: { anim: 'idle', cssOneShot: { cls: 'anim-wiggle', dur: 600 } },
     play: { anim: 'idle', cssOneShot: { cls: 'anim-jump', dur: 550 } },
     ball: { anim: 'idle', cssOneShot: { cls: 'anim-jump', dur: 550 } },
-    dance: { anim: 'walk' },
+    dance: { anim: 'idle', cssLoop: 'anim-dance' },
     read: { anim: 'sit' },
     petting: { anim: 'idle', cssOneShot: { cls: 'anim-wiggle', dur: 600 } },
-    sulking: { anim: 'idle' },
+    sulking: { anim: 'idle', cssLoop: 'anim-sulking' },
     wakeup: { anim: 'idle', cssOneShot: { cls: 'anim-stretch', dur: 1500 } },
     attention: { anim: 'idle', cssOneShot: { cls: 'anim-shake', dur: 600 } },
     work: { anim: 'sit' },
@@ -326,9 +332,21 @@ const AnimationSystem = (() => {
     // Clear any pending oneShots (new behavior takes over)
     oneShotQueue = [];
 
+    // Remove previous persistent CSS loop class (e.g., anim-dance, anim-sulking)
+    if (_currentCssLoopClass && canvasEl) {
+      canvasEl.classList.remove(_currentCssLoopClass);
+      _currentCssLoopClass = null;
+    }
+
     // CSS oneShot overlay (e.g., anim-jump, anim-wiggle on canvas element)
     if (mapping.cssOneShot && canvasEl) {
       playOneShot(mapping.cssOneShot.cls, mapping.cssOneShot.dur);
+    }
+
+    // CSS loop overlay (persistent until behavior changes, e.g., anim-dance, anim-sulking)
+    if (mapping.cssLoop && canvasEl) {
+      canvasEl.classList.add(mapping.cssLoop);
+      _currentCssLoopClass = mapping.cssLoop;
     }
 
     // Sprite-level oneShot (e.g., begin→sleep: play begin once, then auto-transition to sleep loop)

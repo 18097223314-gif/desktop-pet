@@ -35,6 +35,7 @@ const {
   INTERACTION_DURATION_WASH,
 } = require('./constants');
 const { BrowserWindow } = require('electron');
+const DialogueManager = require('./dialogue-manager');
 
 class PetAI {
   /**
@@ -108,6 +109,10 @@ class PetAI {
 
     /** @type {Object} 活跃时段行为频率修正 */
     this.behaviorFrequencyMultiplier = 1.0;
+
+    /** @type {DialogueManager} 台词管理器 */
+    this.dialogueManager = new DialogueManager();
+    this.dialogueManager.startWatching();
 
     // 绑定方法到实例，确保定时器回调中 this 正确
     this.decayTick = this.decayTick.bind(this);
@@ -649,6 +654,46 @@ class PetAI {
   }
 
   // ══════════════════════════════════════════════
+  // 台词系统辅助方法
+  // ══════════════════════════════════════════════
+
+  /**
+   * 根据亲密度点数获取所属分档
+   * @param {number} affection 亲密度点数
+   * @returns {'low'|'mid'|'high'}
+   */
+  _getAffectionTier(affection) {
+    if (affection < 300) return 'low';
+    if (affection < 1500) return 'mid';
+    return 'high';
+  }
+
+  /**
+   * 构建台词系统上下文（从数据库读取亲密度，合并当前状态）
+   * @param {number} userId 用户ID
+   * @param {Object} [extra] 额外参数（如 itemName）
+   * @returns {Object} 传给 DialogueManager.getDialogue 的 context
+   */
+  _getDialogueContext(userId, extra = {}) {
+    let affection = 0;
+    try {
+      const user = this.db.get('SELECT affection FROM users WHERE id = ?', userId);
+      if (user) affection = user.affection || 0;
+    } catch (e) { /* ignore */ }
+
+    return {
+      emotion: this.status.emotion.toLowerCase(),
+      affectionTier: this._getAffectionTier(affection),
+      affection,
+      hunger: this.status.hunger,
+      mood: this.status.mood,
+      level: this.pet.level,
+      evolutionName: this.pet.evolutionName,
+      ...extra,
+    };
+  }
+
+  // ══════════════════════════════════════════════
   // 互动 API（供 IPC 调用）
   // ══════════════════════════════════════════════
 
@@ -664,7 +709,7 @@ class PetAI {
       const remaining = Math.ceil((this.cooldowns.pet - now) / 1000);
       return {
         success: false,
-        message: `爪爪还在害羞中，${remaining}秒后再摸~`,
+        message: this.dialogueManager.getCooldownDialogue('pet', { remaining }),
         status: this.getStatus(),
       };
     }
@@ -688,9 +733,10 @@ class PetAI {
     // 记录事件日志
     this._logEvent('pet', { moodGain: 5, affectionGain: 1, expGain: 2 });
 
+    const ctx = this._getDialogueContext(userId);
     return {
       success: true,
-      message: '爪爪蹭了蹭你的手~',
+      message: this.dialogueManager.getDialogue('pet', ctx),
       status: this.getStatus(),
     };
   }
@@ -707,7 +753,7 @@ class PetAI {
       const remaining = Math.ceil((this.cooldowns.feed - now) / 1000);
       return {
         success: false,
-        message: `爪爪刚吃过，${remaining}秒后再喂~`,
+        message: this.dialogueManager.getCooldownDialogue('feed', { remaining }),
         status: this.getStatus(),
       };
     }
@@ -743,9 +789,10 @@ class PetAI {
     // 记录事件日志
     this._logEvent('feed', { userId, itemId: itemId, itemName: item.name, expGain: 5 });
 
+    const ctx = this._getDialogueContext(userId, { itemName: item.name });
     return {
       success: true,
-      message: `爪爪吃了${item.name}，好满足~`,
+      message: this.dialogueManager.getDialogue('feed', ctx),
       status: this.getStatus(),
     };
   }
@@ -761,7 +808,7 @@ class PetAI {
       const remaining = Math.ceil((this.cooldowns.wash - now) / 1000);
       return {
         success: false,
-        message: `爪爪刚洗过澡，${remaining}秒后再洗~`,
+        message: this.dialogueManager.getCooldownDialogue('wash', { remaining }),
         status: this.getStatus(),
       };
     }
@@ -782,9 +829,10 @@ class PetAI {
     // 记录事件日志
     this._logEvent('wash', { hygieneGain: 50 });
 
+    const ctx = this._getDialogueContext(1);
     return {
       success: true,
-      message: '爪爪洗得干干净净~',
+      message: this.dialogueManager.getDialogue('wash', ctx),
       status: this.getStatus(),
     };
   }

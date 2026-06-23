@@ -337,7 +337,7 @@ const ITEM_RARITIES = {
 const WORK_JOBS = {
   leaflet: {
     name: '发传单',
-    duration: 1 * 60 * 1000, // 1分钟
+    duration: 5 * 1000, // 5秒（测试用）
     baseReward: 200,
     minLevel: 1,
     staminaCost: 10,
@@ -346,7 +346,7 @@ const WORK_JOBS = {
   },
   waiter: {
     name: '当服务员',
-    duration: 2 * 60 * 1000, // 2分钟
+    duration: 5 * 1000, // 5秒（测试用）
     baseReward: 500,
     minLevel: 2,
     staminaCost: 20,
@@ -355,7 +355,7 @@ const WORK_JOBS = {
   },
   delivery: {
     name: '快递员',
-    duration: 4 * 60 * 1000, // 4分钟
+    duration: 5 * 1000, // 5秒（测试用）
     baseReward: 800,
     minLevel: 3,
     staminaCost: 30,
@@ -364,7 +364,7 @@ const WORK_JOBS = {
   },
   actor: {
     name: '表演者',
-    duration: 6 * 60 * 1000, // 6分钟
+    duration: 5 * 1000, // 5秒（测试用）
     baseReward: 1500,
     minLevel: 5,
     staminaCost: 35,
@@ -373,7 +373,7 @@ const WORK_JOBS = {
   },
   explorer: {
     name: '探险家',
-    duration: 8 * 60 * 1000, // 8分钟
+    duration: 5 * 1000, // 5秒（测试用）
     baseReward: 1000,
     minLevel: 8,
     staminaCost: 40,
@@ -382,7 +382,7 @@ const WORK_JOBS = {
   },
   teacher: {
     name: '家庭教师',
-    duration: 10 * 60 * 1000, // 10分钟
+    duration: 5 * 1000, // 5秒（测试用）
     baseReward: 2000,
     minLevel: 10,
     staminaCost: 30,
@@ -391,7 +391,7 @@ const WORK_JOBS = {
   },
   researcher: {
     name: '研究员',
-    duration: 12 * 60 * 1000, // 12分钟
+    duration: 5 * 1000, // 5秒（测试用）
     baseReward: 3000,
     minLevel: 15,
     staminaCost: 35,
@@ -401,7 +401,7 @@ const WORK_JOBS = {
   },
   adventurer: {
     name: '冒险者',
-    duration: 16 * 60 * 1000, // 16分钟
+    duration: 5 * 1000, // 5秒（测试用）
     baseReward: 5000,
     minLevel: 20,
     staminaCost: 50,

@@ -45,7 +45,8 @@ class SignInSystem {
       if (signInfo.last_sign_date === today) {
         return {
           success: false,
-          message: '今天已经签到过了',
+          code: 'SI-001',
+          message: '[SI-001] 今天已经签到过了',
           consecutiveDays: signInfo.consecutive_days || 0,
           reward: {},
           todaySigned: true,
@@ -86,7 +87,7 @@ class SignInSystem {
         JSON.stringify({ consecutiveDays, reward }),
       );
     } catch (err) {
-      console.error('[SignIn] 日志记录失败:', err.message);
+      console.error('[SignIn] [SI-002] 日志记录失败:', err.message);
     }
 
     return {
@@ -189,7 +190,7 @@ class SignInSystem {
         JSON.stringify({ previousStreak }),
       );
     } catch (err) {
-      console.error('[SignIn] 断签日志记录失败:', err.message);
+      console.error('[SignIn] [SI-003] 断签日志记录失败:', err.message);
     }
 
     console.log(`[SignIn] 用户${userId}断签，之前连续${previousStreak}天`);

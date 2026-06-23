@@ -122,11 +122,11 @@ class IPCHandlers {
            VALUES (1, '主人', 1, 0, ${INITIAL_GOLD}, 0, 0, 0)`,
         );
       } catch (err) {
-        throw new Error('用户初始化失败: ' + err.message);
+        throw new Error('[IH-125] 用户初始化失败: ' + err.message);
       }
       user = this.db.get('SELECT * FROM users WHERE id = 1');
       if (!user) {
-        throw new Error('用户创建后无法查询，数据库可能损坏');
+        throw new Error('[IH-129] 用户创建后无法查询，数据库可能损坏');
       }
       console.log('[IPC] 用户创建成功');
     }
@@ -170,7 +170,7 @@ class IPCHandlers {
       const rateCheck = this._checkRateLimit(channel);
       if (!rateCheck.allowed) {
         console.warn(`[IPC] ${channel} 速率限制，${rateCheck.retryAfter}s 后重试`);
-        return { success: false, data: null, error: `操作太频繁，请 ${rateCheck.retryAfter} 秒后重试`, requestId };
+        return { success: false, data: null, error: `[IH-RL] 操作太频繁，请 ${rateCheck.retryAfter} 秒后重试`, requestId };
       }
 
       try {
@@ -178,12 +178,12 @@ class IPCHandlers {
         if (payload?.quantity !== undefined && payload.quantity != null) {
           const q = Number(payload.quantity);
           if (!Number.isInteger(q) || q <= 0) {
-            throw new Error('数量必须为正整数');
+            throw new Error('[IH-181] 数量必须为正整数');
           }
         }
         if (payload?.itemId !== undefined && payload.itemId != null) {
           if (typeof payload.itemId !== 'string' || !payload.itemId.trim()) {
-            throw new Error('道具ID不能为空');
+            throw new Error('[IH-186] 道具ID不能为空');
           }
         }
         const data = await handler(payload, event);
@@ -213,7 +213,7 @@ class IPCHandlers {
     this._wrapHandler(IPC_CHANNELS.PET_FEED, (payload) => {
       const userId = this._getUserId(payload);
       const itemId = payload?.itemId;
-      if (!itemId) throw new Error('缺少道具ID');
+      if (!itemId) throw new Error('[IH-216] 缺少道具ID');
       const result = this.petAI.feed(userId, itemId);
       this.saveManager.markDirty('petAI');
       if (result.success) this.petAI.pushState();
@@ -270,7 +270,7 @@ class IPCHandlers {
     this._wrapHandler(IPC_CHANNELS.ECONOMY_USE_ITEM, (payload, event) => {
       const userId = this._getUserId(payload);
       const itemId = typeof payload === 'string' ? payload : payload?.itemId;
-      if (!itemId) throw new Error('缺少道具ID');
+      if (!itemId) throw new Error('[IH-216] 缺少道具ID');
       console.log('[IPC] economy:useItem itemId:', itemId);
       const result = this.economy.useItem(userId, itemId);
       console.log('[IPC] economy:useItem result:', result.success, result.message);
@@ -312,7 +312,7 @@ class IPCHandlers {
       const userId = this._getUserId(payload);
       const itemId = payload?.itemId;
       const quantity = payload?.quantity || 1;
-      if (!itemId) throw new Error('缺少道具ID');
+      if (!itemId) throw new Error('[IH-216] 缺少道具ID');
       const result = this.economy.sellItem(userId, itemId, quantity);
       this.saveManager.markDirty('economy');
       return result;
@@ -335,7 +335,7 @@ class IPCHandlers {
       const userId = this._getUserId(payload);
       const itemId = payload?.itemId;
       const quantity = payload?.quantity || 1;
-      if (!itemId) throw new Error('缺少道具ID');
+      if (!itemId) throw new Error('[IH-216] 缺少道具ID');
       const result = this.economy.buyItem(userId, itemId, quantity);
       this.saveManager.markDirty('economy');
       return result;
@@ -357,7 +357,7 @@ class IPCHandlers {
     this._wrapHandler(IPC_CHANNELS.QUEST_CLAIM, (payload) => {
       const userId = this._getUserId(payload);
       const taskId = payload?.taskId;
-      if (!taskId) throw new Error('缺少任务ID');
+      if (!taskId) throw new Error('[IH-360] 缺少任务ID');
       const result = this.questSystem.claimTaskReward(userId, taskId);
       this.saveManager.markDirty('quest');
       return result;
@@ -373,7 +373,7 @@ class IPCHandlers {
     this._wrapHandler(IPC_CHANNELS.QUEST_ACHIEVEMENT_CLAIM, (payload) => {
       const userId = this._getUserId(payload);
       const achievementId = payload?.achievementId;
-      if (!achievementId) throw new Error('缺少成就ID');
+      if (!achievementId) throw new Error('[IH-376] 缺少成就ID');
       const result = this.questSystem.claimAchievement(userId, achievementId);
       this.saveManager.markDirty('quest');
       return result;
@@ -390,7 +390,7 @@ class IPCHandlers {
       this._ensureUser();
       const userId = this._getUserId(payload);
       const workType = payload?.workType;
-      if (!workType) throw new Error('缺少工作类型');
+      if (!workType) throw new Error('[IH-393] 缺少工作类型');
       const result = this.workSystem.startWork(userId, workType);
       this.saveManager.markDirty('work');
       return result;
@@ -446,7 +446,7 @@ class IPCHandlers {
     this._wrapHandler(IPC_CHANNELS.SKILL_USE, (payload) => {
       const userId = this._getUserId(payload);
       const skillType = payload?.skillType;
-      if (!skillType) throw new Error('缺少技能类型');
+      if (!skillType) throw new Error('[IH-449] 缺少技能类型');
       const result = this.skillSystem.useSkill(userId, skillType, payload?.context || {});
       this.saveManager.markDirty('skill');
       return result;
@@ -466,7 +466,7 @@ class IPCHandlers {
     // 保存设置
     this._wrapHandler(IPC_CHANNELS.SETTINGS_SET, (payload) => {
       const settings = payload?.settings;
-      if (!settings) throw new Error('缺少设置数据');
+      if (!settings) throw new Error('[IH-469] 缺少设置数据');
       this.store.set('settings', settings);
       return { saved: true };
     });
@@ -516,9 +516,9 @@ class IPCHandlers {
     this._wrapHandler(IPC_CHANNELS.MINIGAME_START, (payload) => {
       const userId = this._getUserId(payload);
       const gameType = payload?.gameType;
-      if (!gameType) throw new Error('缺少游戏类型');
+      if (!gameType) throw new Error('[IH-519] 缺少游戏类型');
       const result = this.miniGameManager.startGame(userId, gameType);
-      if (!result.success) throw new Error(result.message || '开始失败');
+      if (!result.success) throw new Error(result.message || '[IH-521] 开始失败');
       this.saveManager.markDirty('minigame');
       return result;
     });
@@ -528,9 +528,9 @@ class IPCHandlers {
       const userId = this._getUserId(payload);
       const gameType = payload?.gameType;
       const score = payload?.score || 0;
-      if (!gameType) throw new Error('缺少游戏类型');
+      if (!gameType) throw new Error('[IH-531] 缺少游戏类型');
       const result = this.miniGameManager.finishGame(userId, gameType, score);
-      if (!result.success) throw new Error(result.message || '结算失败');
+      if (!result.success) throw new Error(result.message || '[IH-533] 结算失败');
       this.saveManager.markDirty('minigame');
       return result;
     });
@@ -547,11 +547,11 @@ class IPCHandlers {
       const userId = this._getUserId(payload);
       const playerChoice = payload?.playerChoice;
       const bet = payload?.bet || 50;
-      if (!playerChoice) throw new Error('缺少出拳选择');
+      if (!playerChoice) throw new Error('[IH-550] 缺少出拳选择');
       const result = this.miniGameManager.playRps(userId, playerChoice, bet);
       // playRps 已返回 { success, data, error } 格式，_wrapHandler 会再包一层
       // 前端期望 result.data 是游戏数据，所以只返回 data 部分
-      if (!result.success) throw new Error(result.error || '猜拳失败');
+      if (!result.success) throw new Error(result.error || '[IH-554] 猜拳失败');
       this.saveManager.markDirty('minigame');
       return result.data;
     });
@@ -561,9 +561,9 @@ class IPCHandlers {
       const userId = this._getUserId(payload);
       const gameType = payload?.gameType || 'catch-food';
       const hitCount = payload?.hitCount || 0;
-      if (gameType !== 'catch-food') throw new Error('仅支持 catch-food 类型');
+      if (gameType !== 'catch-food') throw new Error('[IH-564] 仅支持 catch-food 类型');
       const result = this.miniGameManager.rewardCatchFood(userId, hitCount);
-      if (!result.success) throw new Error(result.error || '结算失败');
+      if (!result.success) throw new Error(result.error || '[IH-566] 结算失败');
       this.saveManager.markDirty('minigame');
       return result.data;
     });
@@ -642,8 +642,14 @@ class IPCHandlers {
     this._wrapHandler(IPC_CHANNELS.USER_UPDATE, (payload) => {
       const userId = this._getUserId(payload);
       const updates = payload?.updates;
-      if (!updates) throw new Error('缺少更新数据');
+      if (!updates) throw new Error('[IH-645] 缺少更新数据');
       const allowedFields = ['name', 'birth_date'];
+      const name = updates.name;
+      if (name !== undefined) {
+        if (typeof name !== 'string' || !name.trim()) throw new Error('[UR-001] 名字不能为空');
+        if (name.length > 12) throw new Error('[UR-002] 名字最多12个字符');
+        if (/[<>"'&]/.test(name)) throw new Error('[UR-003] 名字包含非法字符');
+      }
       for (const field of allowedFields) {
         if (updates[field] !== undefined) {
           this.db.run(`UPDATE users SET ${field} = ? WHERE id = ?`, updates[field], userId);
@@ -666,9 +672,9 @@ class IPCHandlers {
     // 选择进化（Lv20 后调用）
     this._wrapHandler(IPC_CHANNELS.PET_EVOLVE, (payload) => {
       const evolutionType = payload?.evolutionType;
-      if (!evolutionType) throw new Error('缺少进化类型');
+      if (!evolutionType) throw new Error('[IH-669] 缺少进化类型');
       if (!EVOLUTION_BRANCH_IDS.includes(evolutionType)) {
-        throw new Error('无效的进化类型，可选: ' + EVOLUTION_BRANCH_IDS.join(', '));
+        throw new Error('[IH-671] 无效的进化类型，可选: ' + EVOLUTION_BRANCH_IDS.join(', '));
       }
       const result = this.petAI.evolve(evolutionType);
       this.saveManager.markDirty('petAI');
@@ -684,7 +690,7 @@ class IPCHandlers {
     // 设置语言
     this._wrapHandler(IPC_CHANNELS.I18N_SET_LOCALE, (payload) => {
       const locale = payload?.locale;
-      if (!locale) throw new Error('缺少语言参数');
+      if (!locale) throw new Error('[IH-687] 缺少语言参数');
       this.i18n.setLocale(locale);
       return { locale: this.i18n.getLocale() };
     });
@@ -692,7 +698,7 @@ class IPCHandlers {
     // 翻译
     this._wrapHandler(IPC_CHANNELS.I18N_T, (payload) => {
       const key = payload?.key;
-      if (!key) throw new Error('缺少翻译键');
+      if (!key) throw new Error('[IH-695] 缺少翻译键');
       return this.i18n.t(key, payload.params);
     });
 

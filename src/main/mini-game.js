@@ -72,12 +72,12 @@ class MiniGameManager {
     // 检查游戏类型是否有效
     const config = MINI_GAME_CONFIGS[gameType];
     if (!config) {
-      return { success: false, message: '未知的小游戏', gameType, timeLimit: null };
+      return { success: false, code: 'MG-001', message: '[MG-001] 未知的小游戏', gameType, timeLimit: null };
     }
 
     // 检查是否已在游戏中
     if (this.activeGames.has(userId)) {
-      return { success: false, message: '已有进行中的游戏', gameType, timeLimit: null };
+      return { success: false, code: 'MG-002', message: '[MG-002] 已有进行中的游戏', gameType, timeLimit: null };
     }
 
     // 检查每日次数限制
@@ -92,13 +92,13 @@ class MiniGameManager {
     const playedToday = row ? row.cnt : 0;
 
     if (playedToday >= config.dailyLimit) {
-      return { success: false, message: `今日${config.name}次数已用完`, gameType, timeLimit: null };
+      return { success: false, code: 'MG-003', message: `[MG-003] 今日${config.name}次数已用完`, gameType, timeLimit: null };
     }
 
     // 检查体力（玩小游戏需要5点体力）
     const petStatus = this.db.get('SELECT stamina FROM pet_status WHERE pet_id = 1');
     if (petStatus && petStatus.stamina < 5) {
-      return { success: false, message: '体力不足，先休息一下吧', gameType, timeLimit: null };
+      return { success: false, code: 'MG-004', message: '[MG-004] 体力不足，先休息一下吧', gameType, timeLimit: null };
     }
 
     // 扣除体力
@@ -143,12 +143,12 @@ class MiniGameManager {
     // 检查是否在游戏中
     const active = this.activeGames.get(userId);
     if (!active || active.gameType !== gameType) {
-      return { success: false, message: '没有进行中的该游戏', reward: {}, score };
+      return { success: false, code: 'MG-005', message: '[MG-005] 没有进行中的该游戏', reward: {}, score };
     }
 
     const config = MINI_GAME_CONFIGS[gameType];
     if (!config) {
-      return { success: false, message: '未知游戏类型', reward: {}, score };
+      return { success: false, code: 'MG-006', message: '[MG-006] 未知游戏类型', reward: {}, score };
     }
 
     // 计算奖励
@@ -206,7 +206,7 @@ class MiniGameManager {
         JSON.stringify({ gameType, score, reward, multiplier, bonusItem }),
       );
     } catch (err) {
-      console.error('[MiniGame] 日志记录失败:', err.message);
+      console.error('[MiniGame] [MG-013] 日志记录失败:', err.message);
     }
 
     return {
@@ -339,22 +339,22 @@ class MiniGameManager {
   playRps(userId, playerChoice, bet) {
     const VALID_CHOICES = ['rock', 'scissors', 'paper'];
     if (!VALID_CHOICES.includes(playerChoice)) {
-      return { success: false, data: null, error: '无效的出拳' };
+      return { success: false, code: 'MG-007', data: null, error: '[MG-007] 无效的出拳' };
     }
 
     // 下注校验
     bet = Number(bet);
     if (!Number.isInteger(bet) || bet < 10) {
-      return { success: false, data: null, error: '下注至少 10 金币' };
+      return { success: false, code: 'MG-008', data: null, error: '[MG-008] 下注至少 10 金币' };
     }
     if (bet > 1000) {
-      return { success: false, data: null, error: '下注上限 1000 金币' };
+      return { success: false, code: 'MG-009', data: null, error: '[MG-009] 下注上限 1000 金币' };
     }
 
     // 检查金币
     const balance = this.economy.getBalance(userId);
     if (balance.gold < bet) {
-      return { success: false, data: null, error: '金币不足' };
+      return { success: false, code: 'MG-010', data: null, error: '[MG-010] 金币不足' };
     }
 
     // 检查每日次数
@@ -367,7 +367,7 @@ class MiniGameManager {
       today,
     );
     if ((row ? row.cnt : 0) >= config.dailyLimit) {
-      return { success: false, data: null, error: '今日石头剪刀布次数已用完' };
+      return { success: false, code: 'MG-011', data: null, error: '[MG-011] 今日石头剪刀布次数已用完' };
     }
 
     // CPU 出拳（真随机）
@@ -448,7 +448,7 @@ class MiniGameManager {
       today,
     );
     if ((row ? row.cnt : 0) >= config.dailyLimit) {
-      return { success: false, data: null, error: '今日食物反应次数已用完' };
+      return { success: false, code: 'MG-012', data: null, error: '[MG-012] 今日食物反应次数已用完' };
     }
 
     // 奖励：每个点到 +15 金币

@@ -190,7 +190,7 @@
             if (result && result.success) {
               BubbleComponent.show(`✅ 签到成功！连续${result.data?.consecutiveDays || 1}天`, 2500);
             } else {
-              BubbleComponent.show(result?.message || result?.error || '签到失败', 2500);
+              BubbleComponent.show(result?.message || result?.error || '[UI-SI] 签到失败', 2500);
             }
           } catch (err) {
             BubbleComponent.show('签到出错: ' + (err.message || '未知错误'), 2500);
