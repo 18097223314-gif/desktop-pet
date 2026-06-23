@@ -594,6 +594,7 @@ module.exports = {
   ITEM_RARITIES,
   WORK_JOBS,
   RANDOM_BEHAVIOR_POOL,
+  BEHAVIOR_SCORING,
   LEVEL_CONFIG,
   SIGNIN_REWARDS_V2,
   MINI_GAME_CONFIGS,
@@ -623,4 +624,61 @@ module.exports = {
   WORK_BONUS_ITEM_CHANCE,
   SKILL_EXP_BASE,
   RATE_LIMIT_WINDOW_MS,
+};
+
+// ─── 行为评分系统配置 ──────────────────────────
+const BEHAVIOR_SCORING = {
+  // 基础需求阈值（超过阈值才考虑）
+  NEED_EAT: 20,
+  NEED_WASH: 20,
+  NEED_PLAY: 25,
+  NEED_SLEEP: 15,
+
+  // 基础分值
+  BASE_SCORES: {
+    SICK: 100,      // 生病最高优先级
+    EAT: 80,        // 饥饿
+    WASH: 70,       // 脏
+    PLAY: 60,       // 无聊
+    SLEEP: 50,      // 疲劳
+    ATTENTION: 40,  // 吸引注意
+  },
+
+  // 情绪加成系数
+  EMOTION_BONUS: {
+    HUNGRY: { EAT: 1.5 },
+    DIRTY: { WASH: 1.5 },
+    BORED: { PLAY: 1.5 },
+    TIRED: { SLEEP: 1.5 },
+    SAD: { PLAY: 1.3, SULKING: 1.3 },
+    HAPPY: { PLAY: 1.2, DANCE: 1.2 },
+    EXCITED: { PLAY: 1.3, DANCE: 1.3, BALL: 1.3 },
+  },
+
+  // 好感度阶段加成
+  AFFECTION_BONUS: {
+    stranger: { SULKING: 1.5, ATTENTION: 1.5 },
+    acquaintance: { PLAY: 1.2, SULKING: 1.2 },
+    friend: { PLAY: 1.3, DANCE: 1.2 },
+    close_friend: { PLAY: 1.4, DANCE: 1.3, BALL: 1.3 },
+    best_friend: { PLAY: 1.5, DANCE: 1.4, BALL: 1.4, READ: 1.3 },
+    soulmate: { PLAY: 1.6, DANCE: 1.5, BALL: 1.5, READ: 1.4 },
+    bonded: { PLAY: 1.7, DANCE: 1.6, BALL: 1.6, READ: 1.5 },
+  },
+
+  // 时间段加成
+  TIME_BONUS: {
+    morning: { WAKEUP: 2.0, EAT: 1.3 },
+    noon: { EAT: 1.5, SIT: 1.3 },
+    active: { PLAY: 1.4, DANCE: 1.4, BALL: 1.4 },
+    sleep: { SLEEP: 2.0, IDLE: 1.5 },
+  },
+
+  // 等级加成（每级+2%）
+  LEVEL_MULTIPLIER: 0.02,
+
+  // 自动恢复量
+  AUTO_EAT_GAIN: 40,
+  AUTO_WASH_GAIN: 40,
+  AUTO_PLAY_GAIN: 30,
 };

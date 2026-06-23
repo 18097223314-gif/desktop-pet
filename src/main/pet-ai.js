@@ -33,6 +33,8 @@ const {
   INTERACTION_DURATION_PETTING,
   INTERACTION_DURATION_EAT,
   INTERACTION_DURATION_WASH,
+  BEHAVIOR_SCORING,
+  AFFECTION_STAGES,
 } = require('./constants');
 const { BrowserWindow } = require('electron');
 const DialogueManager = require('./dialogue-manager');
@@ -496,14 +498,52 @@ class PetAI {
    * 从随机行为池中选取并执行一个行为
    * @private
    */
+  /**
+   * 从随机行为池中选取并执行一个行为（动态权重版本）
+   * @private
+   */
   _executeRandomBehavior() {
-    // 根据权重选择行为
     const pool = RANDOM_BEHAVIOR_POOL;
-    const totalWeight = pool.reduce((sum, b) => sum + b.weight, 0);
+    const scoring = BEHAVIOR_SCORING;
+    
+    // 获取当前上下文
+    const context = this._getBehaviorContext();
+    
+    // 计算每个行为的动态权重
+    const weightedPool = pool.map(behavior => {
+      let weight = behavior.baseWeight || behavior.weight;
+      
+      // 1. 情绪加成
+      const emotionBonus = scoring.EMOTION_BONUS[context.emotion];
+      if (emotionBonus && emotionBonus[behavior.state]) {
+        weight *= emotionBonus[behavior.state];
+      }
+      
+      // 2. 好感度阶段加成
+      const affectionBonus = scoring.AFFECTION_BONUS[context.affectionStage];
+      if (affectionBonus && affectionBonus[behavior.state]) {
+        weight *= affectionBonus[behavior.state];
+      }
+      
+      // 3. 时间段加成
+      const timeBonus = scoring.TIME_BONUS[context.timeSlot];
+      if (timeBonus && timeBonus[behavior.state]) {
+        weight *= timeBonus[behavior.state];
+      }
+      
+      // 4. 等级加成（每级+2%）
+      const levelBonus = 1 + (context.level * scoring.LEVEL_MULTIPLIER);
+      weight *= levelBonus;
+      
+      return { ...behavior, weight };
+    });
+    
+    // 根据动态权重选择行为
+    const totalWeight = weightedPool.reduce((sum, b) => sum + b.weight, 0);
     let rand = Math.random() * totalWeight;
 
-    let selected = pool[0];
-    for (const behavior of pool) {
+    let selected = weightedPool[0];
+    for (const behavior of weightedPool) {
       rand -= behavior.weight;
       if (rand <= 0) {
         selected = behavior;
@@ -512,11 +552,13 @@ class PetAI {
     }
 
     // 直接使用原始 duration，不再应用乘法修正
-    // 之前 behaviorFrequencyMultiplier 和 speedMultiplier 会压缩持续时间，导致状态切换太快
     const duration = selected.duration;
     if (this.emitter)
-      this.emitter.send('pet:debug-log', `[PetAI] 随机行为: ${selected.state}, 持续: ${(duration / 1000).toFixed(1)}s`);
+      this.emitter.send('pet:debug-log', `[PetAI] 随机行为: ${selected.state}, 持续: ${(duration / 1000).toFixed(1)}s, 权重: ${selected.weight.toFixed(2)}`);
     this._setState(selected.state, duration);
+    
+    // 行为执行后更新情绪
+    this._updateEmotionFromBehavior(selected.state);
   }
 
   /**
@@ -558,7 +600,7 @@ class PetAI {
     const s = this.status;
     let newEmotion = EMOTIONS.NORMAL;
 
-    // 优先级：sick > hungry > dirty > tired > bored > happy > normal
+    // 优先级：sick > hungry > dirty > tired > bored > excited > happy > normal
     if (s.isSick) {
       newEmotion = EMOTIONS.SICK;
     } else if (s.hunger < EMOTION_THRESHOLDS.HUNGRY_HUNGER) {
@@ -569,6 +611,9 @@ class PetAI {
       newEmotion = EMOTIONS.TIRED;
     } else if (s.mood < EMOTION_THRESHOLDS.BORED_MOOD) {
       newEmotion = EMOTIONS.BORED;
+    } else if (s.mood > 90 && s.hunger > 80 && s.hygiene > 80) {
+      // 所有属性都很好时，有概率变成兴奋
+      newEmotion = Math.random() < 0.3 ? EMOTIONS.EXCITED : EMOTIONS.HAPPY;
     } else if (s.hunger > EMOTION_THRESHOLDS.HAPPY_HUNGER && s.mood > EMOTION_THRESHOLDS.HAPPY_MOOD) {
       newEmotion = EMOTIONS.HAPPY;
     }
@@ -589,6 +634,10 @@ class PetAI {
   /**
    * 检查当前时间段并触发对应行为
    */
+  /**
+   * 检查当前时间段并触发对应行为（优化版）
+   * 增加好感度感知和更细腻的时间段处理
+   */
   checkTimeContext() {
     // 驻留锁：行为未持续满 _minStayDuration 时，不触发时间段行为
     const now = Date.now();
@@ -599,7 +648,11 @@ class PetAI {
     }
 
     const hour = new Date().getHours();
-
+    const timeSlot = this._getCurrentTimeSlot();
+    
+    // 获取好感度阶段
+    const affectionStage = this._getAffectionStage();
+    
     // 07:00-08:00 → 起床动画
     if (hour >= 7 && hour < 8) {
       if (this.status.state === PET_STATES.SLEEP) {
@@ -608,6 +661,14 @@ class PetAI {
         this._setState(PET_STATES.WAKEUP, 5000);
         // 同时恢复体力
         this.status.stamina = Math.min(STAT_LIMITS.MAX, this.status.stamina + 20);
+        
+        // 好感度高的宠物起床时有特殊表现
+        if (affectionStage === 'soulmate' || affectionStage === 'bonded') {
+          this.status.mood = Math.min(STAT_LIMITS.MAX, this.status.mood + 5);
+          if (this.emitter) {
+            this.emitter.send('pet:debug-log', `[PetAI] 好感度高，起床心情+5`);
+          }
+        }
       }
       this.behaviorFrequencyMultiplier = 1.0;
     }
@@ -626,14 +687,33 @@ class PetAI {
     }
     // 19:00-21:00 → 活跃时段
     else if (hour >= 19 && hour < 21) {
-      this.behaviorFrequencyMultiplier = 1.5;
+      // 好感度高的宠物在活跃时段更活跃
+      const affectionBonus = affectionStage === 'bonded' ? 1.8 : 
+                           affectionStage === 'soulmate' ? 1.6 :
+                           affectionStage === 'best_friend' ? 1.4 : 1.5;
+      this.behaviorFrequencyMultiplier = affectionBonus;
+      
+      // 高好感度宠物在活跃时段有概率主动玩耍
+      if (['best_friend', 'soulmate', 'bonded'].includes(affectionStage) && 
+          this.status.state === PET_STATES.IDLE && 
+          Math.random() < 0.2) {
+        const playStates = [PET_STATES.PLAY, PET_STATES.DANCE, PET_STATES.BALL];
+        const randomPlay = playStates[Math.floor(Math.random() * playStates.length)];
+        this._setState(randomPlay, 120000); // 2分钟
+        if (this.emitter) {
+          this.emitter.send('pet:debug-log', `[PetAI] 高好感度主动玩耍: ${randomPlay}`);
+        }
+      }
     }
     // 22:00-07:00 → 睡眠时段
     else if (hour >= 22 || hour < 7) {
       this.behaviorFrequencyMultiplier = 0.2;
       // 如果不是在睡觉，有概率进入睡觉
       if (this.status.state !== PET_STATES.SLEEP && this.status.state !== PET_STATES.SICK) {
-        if (Math.random() < 0.3) {
+        // 好感度高的宠物更容易按时睡觉
+        const sleepChance = affectionStage === 'bonded' ? 0.5 : 
+                          affectionStage === 'soulmate' ? 0.4 : 0.3;
+        if (Math.random() < sleepChance) {
           this._setState(PET_STATES.SLEEP, 60000);
         }
       }
@@ -644,15 +724,14 @@ class PetAI {
     }
 
     console.log(
-      `[PetAI] checkTimeContext: hour=${hour}, multiplier=${this.behaviorFrequencyMultiplier}, state=${this.status.state}`,
+      `[PetAI] checkTimeContext: hour=${hour}, timeSlot=${timeSlot}, affectionStage=${affectionStage}, multiplier=${this.behaviorFrequencyMultiplier}, state=${this.status.state}`,
     );
     if (this.emitter)
       this.emitter.send(
         'pet:debug-log',
-        `[PetAI] checkTimeContext: hour=${hour}, multiplier=${this.behaviorFrequencyMultiplier}`,
+        `[PetAI] checkTimeContext: hour=${hour}, timeSlot=${timeSlot}, affectionStage=${affectionStage}, multiplier=${this.behaviorFrequencyMultiplier}`,
       );
   }
-
   // ══════════════════════════════════════════════
   // 台词系统辅助方法
   // ══════════════════════════════════════════════
@@ -1245,6 +1324,95 @@ class PetAI {
       evolutionName: this.pet.evolutionName,
     };
   }
+
+  /**
+   * 获取当前行为上下文
+   * @private
+   * @returns {Object} 上下文信息
+   */
+  _getBehaviorContext() {
+    const s = this.status;
+    
+    // 获取当前时间段
+    const timeSlot = this._getCurrentTimeSlot();
+    
+    // 获取好感度阶段
+    const affectionStage = this._getAffectionStage();
+    
+    return {
+      emotion: s.emotion,
+      timeSlot,
+      affectionStage,
+      level: this.pet.level,
+      isSick: s.isSick,
+    };
+  }
+
+  /**
+   * 获取当前时间段
+   * @private
+   * @returns {string} 时间段
+   */
+  _getCurrentTimeSlot() {
+    const hour = new Date().getHours();
+    if (hour >= 7 && hour < 9) return TIME_SLOTS.MORNING;
+    if (hour >= 12 && hour < 14) return TIME_SLOTS.NOON;
+    if (hour >= 19 && hour < 22) return TIME_SLOTS.ACTIVE;
+    if (hour >= 22 || hour < 7) return TIME_SLOTS.SLEEP;
+    return TIME_SLOTS.NORMAL;
+  }
+
+  /**
+   * 获取好感度阶段
+   * @private
+   * @returns {string} 好感度阶段
+   */
+  _getAffectionStage() {
+    try {
+      const user = this.db.get('SELECT affection FROM users WHERE id = 1');
+      const affection = user ? user.affection || 0 : 0;
+      
+      for (const stage of AFFECTION_STAGES) {
+        if (affection >= stage.min && affection <= stage.max) {
+          return stage.stage;
+        }
+      }
+    } catch (e) {
+      console.warn('[PetAI] 获取好感度阶段失败:', e.message);
+    }
+    return 'stranger';
+  }
+
+  /**
+   * 根据行为更新情绪状态
+   * @private
+   * @param {string} behavior 执行的行为
+   */
+  _updateEmotionFromBehavior(behavior) {
+    const s = this.status;
+    
+    // 行为对情绪的影响
+    switch (behavior) {
+      case PET_STATES.PLAY:
+      case PET_STATES.DANCE:
+      case PET_STATES.BALL:
+        s.mood = Math.min(STAT_LIMITS.MAX, s.mood + 2);
+        break;
+      case PET_STATES.READ:
+        // 看书略微降低心情，但增加其他收益
+        s.mood = Math.max(0, s.mood - 1);
+        break;
+      case PET_STATES.SIT:
+      case PET_STATES.IDLE:
+        // 静止状态略微降低心情
+        s.mood = Math.max(0, s.mood - 0.5);
+        break;
+    }
+    
+    // 立即更新情绪状态
+    this.updateEmotion();
+  }
+
 }
 
 module.exports = PetAI;
