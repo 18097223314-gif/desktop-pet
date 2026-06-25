@@ -39,6 +39,38 @@ const {
 const { BrowserWindow } = require('electron');
 const DialogueManager = require('./dialogue-manager');
 
+// ─── 活动状态集合（避免每次 _isActiveState 调用时新建数组）───
+const ACTIVE_STATES = new Set([
+  PET_STATES.WALK,
+  PET_STATES.PLAY,
+  PET_STATES.DANCE,
+  PET_STATES.BALL,
+  PET_STATES.WORK,
+  PET_STATES.WASH,
+]);
+
+// ─── 等级称号（getStatus 复用，避免每次调用重建）───
+const LEVEL_TITLES = {
+  1: '新手宠物', 2: '新手宠物',
+  3: '小伙伴', 4: '小伙伴',
+  5: '好朋友', 6: '好朋友',
+  7: '好伙伴', 8: '好伙伴',
+  9: '小能手', 10: '小能手',
+  11: '资深伙伴', 12: '资深伙伴',
+  13: '高级伙伴', 14: '高级伙伴',
+  15: '精英伙伴', 16: '精英伙伴',
+  17: '传说伙伴', 18: '传说伙伴',
+  19: '神话伙伴', 20: '终极进化',
+};
+
+// ─── 好感度阶段 → 活跃/睡眠倍率映射 ───
+const AFFECTION_ACTIVE_BONUS = {
+  bonded: 1.8, soulmate: 1.6, best_friend: 1.4,
+};
+const AFFECTION_SLEEP_CHANCE = {
+  bonded: 0.5, soulmate: 0.4,
+};
+
 class PetAI {
   /**
    * @param {PetDatabase} database 数据库实例
@@ -109,6 +141,9 @@ class PetAI {
     /** @type {number} 生病状态持续计时（秒） */
     this.sickTimer = 0;
 
+    /** @type {Object} 好感度阶段缓存（避免每次行为tick查DB） */
+    this._affectionCache = { stage: 'stranger', ts: 0 };
+
     /** @type {Object} 活跃时段行为频率修正 */
     this.behaviorFrequencyMultiplier = 1.0;
 
@@ -167,6 +202,7 @@ class PetAI {
     this.behaviorEndTime = 0;
     this._minStayUntil = 0;
     this.sickTimer = 0;
+    this._affectionCache = { stage: 'stranger', ts: 0 };
     this.behaviorFrequencyMultiplier = 1.0;
     console.log('[PetAI] 状态已重置为初始值');
   }
@@ -304,15 +340,7 @@ class PetAI {
    * @private
    */
   _isActiveState(state) {
-    const activeStates = [
-      PET_STATES.WALK,
-      PET_STATES.PLAY,
-      PET_STATES.DANCE,
-      PET_STATES.BALL,
-      PET_STATES.WORK,
-      PET_STATES.WASH,
-    ];
-    return activeStates.includes(state);
+    return ACTIVE_STATES.has(state);
   }
 
   /**
@@ -687,11 +715,8 @@ class PetAI {
     }
     // 19:00-21:00 → 活跃时段
     else if (hour >= 19 && hour < 21) {
-      // 好感度高的宠物在活跃时段更活跃
-      const affectionBonus = affectionStage === 'bonded' ? 1.8 : 
-                           affectionStage === 'soulmate' ? 1.6 :
-                           affectionStage === 'best_friend' ? 1.4 : 1.5;
-      this.behaviorFrequencyMultiplier = affectionBonus;
+      // 好感度高的宠物在活跃时段更活跃（查表代替 if-else 链）
+      this.behaviorFrequencyMultiplier = AFFECTION_ACTIVE_BONUS[affectionStage] || 1.5;
       
       // 高好感度宠物在活跃时段有概率主动玩耍
       if (['best_friend', 'soulmate', 'bonded'].includes(affectionStage) && 
@@ -710,9 +735,8 @@ class PetAI {
       this.behaviorFrequencyMultiplier = 0.2;
       // 如果不是在睡觉，有概率进入睡觉
       if (this.status.state !== PET_STATES.SLEEP && this.status.state !== PET_STATES.SICK) {
-        // 好感度高的宠物更容易按时睡觉
-        const sleepChance = affectionStage === 'bonded' ? 0.5 : 
-                          affectionStage === 'soulmate' ? 0.4 : 0.3;
+        // 好感度高的宠物更容易按时睡觉（查表代替 if-else 链）
+        const sleepChance = AFFECTION_SLEEP_CHANCE[affectionStage] || 0.3;
         if (Math.random() < sleepChance) {
           this._setState(PET_STATES.SLEEP, 60000);
         }
@@ -950,29 +974,7 @@ class PetAI {
     const nextLevelExp = this.pet.level < EVOLUTION_REQUIRED_LEVEL ? LEVEL_EXP_CURVE[this.pet.level] : null;
     const expToNext = nextLevelExp ? nextLevelExp : 0;
 
-    // 根据等级生成称号
-    const LEVEL_TITLES = {
-      1: '新手宠物',
-      2: '新手宠物',
-      3: '小伙伴',
-      4: '小伙伴',
-      5: '好朋友',
-      6: '好朋友',
-      7: '好伙伴',
-      8: '好伙伴',
-      9: '小能手',
-      10: '小能手',
-      11: '资深伙伴',
-      12: '资深伙伴',
-      13: '高级伙伴',
-      14: '高级伙伴',
-      15: '精英伙伴',
-      16: '精英伙伴',
-      17: '传说伙伴',
-      18: '传说伙伴',
-      19: '神话伙伴',
-      20: '终极进化',
-    };
+    // 根据等级生成称号（使用模块级 LEVEL_TITLES 常量）
 
     return {
       // 四大属性
@@ -1368,12 +1370,18 @@ class PetAI {
    * @returns {string} 好感度阶段
    */
   _getAffectionStage() {
+    const now = Date.now();
+    // 60秒 TTL 缓存，避免高频调用（行为tick每3秒）反复查DB
+    if (now - this._affectionCache.ts < 60000) {
+      return this._affectionCache.stage;
+    }
     try {
       const user = this.db.get('SELECT affection FROM users WHERE id = 1');
       const affection = user ? user.affection || 0 : 0;
       
       for (const stage of AFFECTION_STAGES) {
         if (affection >= stage.min && affection <= stage.max) {
+          this._affectionCache = { stage: stage.stage, ts: now };
           return stage.stage;
         }
       }
