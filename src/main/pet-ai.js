@@ -422,7 +422,7 @@ class PetAI {
       if (remaining % 30 < 3) {
         if (this.emitter)
           this.emitter.send(
-            'pet:debug-log',
+            IPC_CHANNELS.PET_DEBUG_LOG,
             `[PetAI] behaviorTick 驻留锁: ${this.currentBehavior}, 剩余 ${remaining}s`,
           );
       }
@@ -433,7 +433,7 @@ class PetAI {
     const decision = this.checkNeeds();
     if (decision) {
       if (this.emitter)
-        this.emitter.send('pet:debug-log', `[PetAI] 需求触发: ${decision.state}, 持续: ${decision.duration / 1000}s`);
+        this.emitter.send(IPC_CHANNELS.PET_DEBUG_LOG, `[PetAI] 需求触发: ${decision.state}, 持续: ${decision.duration / 1000}s`);
       this._setState(decision.state, decision.duration);
       if (decision.effect) {
         decision.effect();
@@ -582,7 +582,7 @@ class PetAI {
     // 直接使用原始 duration，不再应用乘法修正
     const duration = selected.duration;
     if (this.emitter)
-      this.emitter.send('pet:debug-log', `[PetAI] 随机行为: ${selected.state}, 持续: ${(duration / 1000).toFixed(1)}s, 权重: ${selected.weight.toFixed(2)}`);
+      this.emitter.send(IPC_CHANNELS.PET_DEBUG_LOG, `[PetAI] 随机行为: ${selected.state}, 持续: ${(duration / 1000).toFixed(1)}s, 权重: ${selected.weight.toFixed(2)}`);
     this._setState(selected.state, duration);
     
     // 行为执行后更新情绪
@@ -671,7 +671,7 @@ class PetAI {
     const now = Date.now();
     if (now < this._minStayUntil) {
       const remaining = Math.round((this._minStayUntil - now) / 1000);
-      if (this.emitter) this.emitter.send('pet:debug-log', `[PetAI] checkTimeContext 驻留锁拦截, 剩余 ${remaining}s`);
+      if (this.emitter) this.emitter.send(IPC_CHANNELS.PET_DEBUG_LOG, `[PetAI] checkTimeContext 驻留锁拦截, 剩余 ${remaining}s`);
       return;
     }
 
@@ -694,7 +694,7 @@ class PetAI {
         if (affectionStage === 'soulmate' || affectionStage === 'bonded') {
           this.status.mood = Math.min(STAT_LIMITS.MAX, this.status.mood + 5);
           if (this.emitter) {
-            this.emitter.send('pet:debug-log', `[PetAI] 好感度高，起床心情+5`);
+            this.emitter.send(IPC_CHANNELS.PET_DEBUG_LOG, `[PetAI] 好感度高，起床心情+5`);
           }
         }
       }
@@ -726,7 +726,7 @@ class PetAI {
         const randomPlay = playStates[Math.floor(Math.random() * playStates.length)];
         this._setState(randomPlay, 120000); // 2分钟
         if (this.emitter) {
-          this.emitter.send('pet:debug-log', `[PetAI] 高好感度主动玩耍: ${randomPlay}`);
+          this.emitter.send(IPC_CHANNELS.PET_DEBUG_LOG, `[PetAI] 高好感度主动玩耍: ${randomPlay}`);
         }
       }
     }
@@ -752,7 +752,7 @@ class PetAI {
     );
     if (this.emitter)
       this.emitter.send(
-        'pet:debug-log',
+        IPC_CHANNELS.PET_DEBUG_LOG,
         `[PetAI] checkTimeContext: hour=${hour}, timeSlot=${timeSlot}, affectionStage=${affectionStage}, multiplier=${this.behaviorFrequencyMultiplier}`,
       );
   }
@@ -761,14 +761,18 @@ class PetAI {
   // ══════════════════════════════════════════════
 
   /**
-   * 根据亲密度点数获取所属分档
+   * 根据亲密度点数获取所属分档（7级对齐 AFFECTION_STAGES）
    * @param {number} affection 亲密度点数
-   * @returns {'low'|'mid'|'high'}
+   * @returns {string} 档位名称：stranger | acquaintance | friend | close_friend | best_friend | soulmate | bonded
    */
   _getAffectionTier(affection) {
-    if (affection < 300) return 'low';
-    if (affection < 1500) return 'mid';
-    return 'high';
+    for (const stage of AFFECTION_STAGES) {
+      if (affection >= stage.min && affection <= stage.max) {
+        return stage.stage;
+      }
+    }
+    // 兜底：返回最低档
+    return AFFECTION_STAGES[0].stage;
   }
 
   /**
@@ -1156,7 +1160,7 @@ class PetAI {
       this.pet.level++;
 
       // 发送升级 IPC 事件
-      this._sendIPCEvent('pet:level-up', {
+      this._sendIPCEvent(IPC_CHANNELS.PET_LEVEL_UP, {
         level: this.pet.level,
         remainingExp: this.pet.exp,
       });
@@ -1207,7 +1211,7 @@ class PetAI {
     }
 
     // 发送里程碑 IPC 事件
-    this._sendIPCEvent('pet:milestone', {
+    this._sendIPCEvent(IPC_CHANNELS.PET_MILESTONE, {
       level,
       title: milestone.title,
       rewards: milestone.rewards,
@@ -1223,7 +1227,7 @@ class PetAI {
   _checkEvolutionReady() {
     if (this.pet.level >= EVOLUTION_REQUIRED_LEVEL && !this.pet.evolutionType && !this._evolutionPending) {
       this._evolutionPending = true;
-      this._sendIPCEvent('pet:evolution-ready', { level: 20 });
+      this._sendIPCEvent(IPC_CHANNELS.PET_EVOLUTION_READY, { level: 20 });
       console.log('[PetAI] 进化就绪！请选择进化方向');
     }
   }
@@ -1239,7 +1243,7 @@ class PetAI {
       const windows = BrowserWindow.getAllWindows();
       for (const win of windows) {
         if (win.webContents && !win.webContents.isDestroyed()) {
-          win.webContents.send('pet:event', { channel, data });
+          win.webContents.send(IPC_CHANNELS.PET_EVENT, { channel, data });
         }
       }
     } catch (err) {
@@ -1275,7 +1279,7 @@ class PetAI {
     this.pet.evolutionName = branch.name;
 
     // 发送进化事件
-    this._sendIPCEvent('pet:evolved', {
+    this._sendIPCEvent(IPC_CHANNELS.PET_EVOLVED, {
       evolutionType: evolutionTypeId,
       evolutionName: branch.name,
     });

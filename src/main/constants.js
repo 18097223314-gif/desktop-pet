@@ -166,12 +166,23 @@ const IPC_CHANNELS = {
   // 基础窗口管理（index.js registerBaseIPCHandlers 使用）
   OPEN_PANEL: 'open-panel',
   CLOSE_PANEL: 'close-panel',
-  GET_SETTINGS: 'get-settings',
-  SAVE_SETTINGS: 'save-settings',
   GET_DISPLAYS: 'get-displays',
   GET_SYSTEM_TIME: 'get-system-time',
   PANEL_ANIMATE_IN: 'panel-animate-in',
   PANEL_ANIMATE_OUT: 'panel-animate-out',
+  MOVE_WINDOW: 'move-window',
+  SHOW_CONTEXT_MENU_NATIVE: 'show-context-menu-native',
+  GET_VERSION: 'get-version',
+  GET_APP_PATH: 'get-app-path',
+
+  // 宠物推送（主进程 → 渲染进程）
+  PET_MENU_ACTION: 'pet:menu-action',
+  PET_DEBUG_LOG: 'pet:debug-log',
+  PET_LEVEL_UP: 'pet:level-up',
+  PET_MILESTONE: 'pet:milestone',
+  PET_EVOLUTION_READY: 'pet:evolution-ready',
+  PET_EVENT: 'pet:event',
+  PET_EVOLVED: 'pet:evolved',
 
   // 性能监控
   PERFORMANCE_REPORT_FPS: 'performance:report-fps',
@@ -184,6 +195,13 @@ const IPC_CHANNELS = {
   I18N_SET_LOCALE: 'i18n:set-locale',
   I18N_T: 'i18n:t',
   I18N_GET_SUPPORTED: 'i18n:get-supported',
+
+  // ─── 台词系统 ────────────────────────────────
+  DIALOGUE_RELOAD: 'dialogue:reload',
+
+  // ─── 主题 ────────────────────────────────────
+  THEME_GET: 'theme:get',
+  THEME_SET: 'theme:set',
 
   // ─── 系统 ────────────────────────────────────
   SYSTEM_RESET_SAVE: 'system:reset-save',

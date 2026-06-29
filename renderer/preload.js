@@ -12,8 +12,8 @@ contextBridge.exposeInMainWorld('petAPI', {
   closePanel: () => ipcRenderer.send('close-panel'),
 
   // ─── 设置读写 ───
-  getSettings: () => ipcRenderer.invoke('get-settings'),
-  saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
+  getSettings: () => ipcRenderer.invoke('settings:get'),
+  saveSettings: (settings) => ipcRenderer.invoke('settings:set', { settings }),
 
   // ─── 系统信息 ───
   getDisplays: () => ipcRenderer.invoke('get-displays'),
@@ -58,6 +58,7 @@ contextBridge.exposeInMainWorld('petAPI', {
   // ─── 经济系统 ───
   economyGetInventory: () => ipcRenderer.invoke('economy:inventory'),
   economyUseItem: (itemId) => ipcRenderer.invoke('economy:useItem', { itemId }),
+  economySell: (itemId, quantity) => ipcRenderer.invoke('economy:sell', { itemId, quantity: quantity || 1 }),
   economyBuy: (itemId) => ipcRenderer.invoke('economy:buy', { itemId }),
   economyGetCoins: () => ipcRenderer.invoke('economy:balance'),
   economyGetShop: () => ipcRenderer.invoke('economy:shop'),
@@ -91,18 +92,18 @@ contextBridge.exposeInMainWorld('petAPI', {
   userUpdate: (data) => ipcRenderer.invoke('user:update', data),
 
   // ─── 事件 ───
-  eventTrigger: (eventId) => ipcRenderer.invoke('event:trigger', eventId),
+  eventTrigger: (eventId) => ipcRenderer.invoke('event:trigger', { eventType: eventId }),
   eventGetFestival: () => ipcRenderer.invoke('event:festival'),
 
   // ─── 任务/成就 ───
   questGetDaily: () => ipcRenderer.invoke('quest:daily'),
-  questClaim: (questId) => ipcRenderer.invoke('quest:claim', questId),
+  questClaim: (questId) => ipcRenderer.invoke('quest:claim', { taskId: questId }),
   questGetAchievements: () => ipcRenderer.invoke('quest:achievements'),
-  questAchievementClaim: (achievementId) => ipcRenderer.invoke('quest:achievement-claim', achievementId),
+  questAchievementClaim: (achievementId) => ipcRenderer.invoke('quest:achievement-claim', { achievementId }),
 
   // ─── 技能 ───
   skillGetList: () => ipcRenderer.invoke('skill:list'),
-  skillUse: (skillId) => ipcRenderer.invoke('skill:use', skillId),
+  skillUse: (skillId) => ipcRenderer.invoke('skill:use', { skillType: skillId }),
 
   // ─── 多语言 ───
   i18nGetLocale: () => ipcRenderer.invoke('i18n:get-locale'),
@@ -112,4 +113,8 @@ contextBridge.exposeInMainWorld('petAPI', {
 
   // ─── 系统 ───
   resetSave: () => ipcRenderer.invoke('system:reset-save'),
+
+  // ─── 主题 ───
+  themeGet: () => ipcRenderer.invoke('theme:get'),
+  themeSet: (themeId) => ipcRenderer.invoke('theme:set', { themeId }),
 });

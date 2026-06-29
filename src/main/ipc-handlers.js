@@ -148,6 +148,7 @@ class IPCHandlers {
     this._handleEvents();
     this._handleUser();
     this._handleLevel();
+    this._handleTheme();
 
     console.log('[IPCHandlers] 所有IPC处理器已注册');
   }
@@ -393,6 +394,11 @@ class IPCHandlers {
       if (!workType) throw new Error('[IH-393] 缺少工作类型');
       const result = this.workSystem.startWork(userId, workType);
       this.saveManager.markDirty('work');
+      // 成功时追加动态台词
+      if (result.success) {
+        const ctx = this.petAI._getDialogueContext(userId, { jobName: result.message });
+        result.dialogue = this.petAI.dialogueManager.getWorkDialogue('work_start', ctx);
+      }
       return result;
     });
 
@@ -402,6 +408,11 @@ class IPCHandlers {
       const userId = this._getUserId(payload);
       const result = this.workSystem.cancelWork(userId);
       this.saveManager.markDirty('work');
+      // 成功时追加动态台词
+      if (result.success) {
+        const ctx = this.petAI._getDialogueContext(userId);
+        result.dialogue = this.petAI.dialogueManager.getWorkDialogue('work_cancel', ctx);
+      }
       return result;
     });
 
@@ -418,6 +429,11 @@ class IPCHandlers {
       const userId = this._getUserId(payload);
       const result = this.workSystem.finishWork(userId);
       this.saveManager.markDirty('work');
+      // 成功时追加动态台词
+      if (result.success) {
+        const ctx = this.petAI._getDialogueContext(userId);
+        result.dialogue = this.petAI.dialogueManager.getWorkDialogue('work_finish', ctx);
+      }
       return result;
     });
 
@@ -458,16 +474,27 @@ class IPCHandlers {
   // ══════════════════════════════════════════════
 
   _handleSettings() {
+    // 允许持久化的设置 key 白名单
+    const ALLOWED_SETTINGS_KEYS = ['sound', 'display', 'notification', 'language', 'theme', 'advanced'];
+
     // 获取设置
     this._wrapHandler(IPC_CHANNELS.SETTINGS_GET, () => {
       return this.store.get('settings', {});
     });
 
-    // 保存设置
+    // 保存设置（仅保留白名单 key，防止恶意写入）
     this._wrapHandler(IPC_CHANNELS.SETTINGS_SET, (payload) => {
       const settings = payload?.settings;
-      if (!settings) throw new Error('[IH-469] 缺少设置数据');
-      this.store.set('settings', settings);
+      if (!settings || typeof settings !== 'object') {
+        throw new Error('[IH-469] 缺少有效的设置数据');
+      }
+      const filtered = {};
+      for (const key of Object.keys(settings)) {
+        if (ALLOWED_SETTINGS_KEYS.includes(key)) {
+          filtered[key] = settings[key];
+        }
+      }
+      this.store.set('settings', filtered);
       return { saved: true };
     });
   }
@@ -707,6 +734,15 @@ class IPCHandlers {
       return this.i18n.getSupportedLocales();
     });
 
+    // ─── 台词系统 ───
+    // 热更新台词（重新加载 dialogues.json，无需重启）
+    this._wrapHandler(IPC_CHANNELS.DIALOGUE_RELOAD, () => {
+      if (!this.petAI || !this.petAI.dialogueManager) {
+        throw new Error('[IH-725] 台词管理器未初始化');
+      }
+      return this.petAI.dialogueManager.reload();
+    });
+
     // ─── 系统 ───
     // 重置存档（清除所有用户数据，保留道具定义）
     this._wrapHandler(IPC_CHANNELS.SYSTEM_RESET_SAVE, () => {
@@ -741,6 +777,30 @@ class IPCHandlers {
       this.saveManager.markDirty('petAI');
 
       return { success: true };
+    });
+  }
+
+  // ══════════════════════════════════════════════
+  // 主题（electron-store 持久化）
+  // ══════════════════════════════════════════════
+
+  _handleTheme() {
+    // 获取当前主题
+    this._wrapHandler(IPC_CHANNELS.THEME_GET, () => {
+      return this.store.get('settings.theme', 'default_white');
+    });
+
+    // 设置主题
+    this._wrapHandler(IPC_CHANNELS.THEME_SET, (payload) => {
+      const themeId = payload?.themeId;
+      if (!themeId || typeof themeId !== 'string') {
+        throw new Error('[IH-THEME] 缺少有效的 themeId');
+      }
+      // 合并写入 settings.theme，保留其他设置项
+      const currentSettings = this.store.get('settings', {});
+      currentSettings.theme = themeId;
+      this.store.set('settings', currentSettings);
+      return { themeId, saved: true };
     });
   }
 }

@@ -367,8 +367,33 @@ body {
     });
   });
 
-  // ─── 初始化 ───
-  renderThemes();
+  // ─── 初始化：从后端恢复已保存的主题 ───
+  async function initTheme() {
+    try {
+      if (window.petAPI && window.petAPI.themeGet) {
+        const savedThemeId = await window.petAPI.themeGet();
+        if (savedThemeId && savedThemeId !== 'default_white') {
+          const saved = THEMES.find(t => t.id === savedThemeId);
+          if (saved) {
+            THEMES.forEach(t => t.equipped = false);
+            saved.equipped = true;
+            saved.owned = true; // 能装备说明已拥有
+            // 更新横幅
+            document.getElementById('current-icon').textContent = saved.icon;
+            document.getElementById('current-name').textContent = saved.name;
+            document.getElementById('current-desc').textContent = saved.desc;
+            const banner = document.getElementById('current-theme');
+            if (banner) banner.style.borderColor = saved.color;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('theme restore failed:', err);
+    }
+    renderThemes();
+  }
+
+  initTheme();
 })();
 </script>
 <script src="../components/panel-common.js"></script>

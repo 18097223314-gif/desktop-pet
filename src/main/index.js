@@ -311,7 +311,7 @@ function handleMenuAction(action) {
     // ─── 宠物行为（通知 renderer 执行动画+逻辑）───
     case 'sleep':
       if (petWindow && !petWindow.isDestroyed()) {
-        petWindow.webContents.send('pet:menu-action', 'sleep');
+        petWindow.webContents.send(IPC_CHANNELS.PET_MENU_ACTION, 'sleep');
       }
       break;
 
@@ -321,22 +321,22 @@ function handleMenuAction(action) {
       break;
     case 'inventory':
       if (petWindow && !petWindow.isDestroyed()) {
-        petWindow.webContents.send('pet:menu-action', 'inventory');
+        petWindow.webContents.send(IPC_CHANNELS.PET_MENU_ACTION, 'inventory');
       }
       break;
     case 'signin':
       if (petWindow && !petWindow.isDestroyed()) {
-        petWindow.webContents.send('pet:menu-action', 'signin');
+        petWindow.webContents.send(IPC_CHANNELS.PET_MENU_ACTION, 'signin');
       }
       break;
     case 'work':
       if (petWindow && !petWindow.isDestroyed()) {
-        petWindow.webContents.send('pet:menu-action', 'work');
+        petWindow.webContents.send(IPC_CHANNELS.PET_MENU_ACTION, 'work');
       }
       break;
     case 'miniGame':
       if (petWindow && !petWindow.isDestroyed()) {
-        petWindow.webContents.send('pet:menu-action', 'miniGame');
+        petWindow.webContents.send(IPC_CHANNELS.PET_MENU_ACTION, 'miniGame');
       }
       break;
 
@@ -406,28 +406,6 @@ function registerBaseIPCHandlers() {
     }, 200);
   });
 
-  // 获取用户设置（兼容旧接口）
-  ipcMain.handle(IPC_CHANNELS.GET_SETTINGS, () => {
-    return store.get('settings', {});
-  });
-
-  // 保存用户设置（兼容旧接口）
-  const ALLOWED_SETTINGS = ['sound', 'display', 'notification', 'language', 'theme', 'advanced'];
-  ipcMain.handle(IPC_CHANNELS.SAVE_SETTINGS, (event, settings) => {
-    if (!settings || typeof settings !== 'object') {
-      return { success: false, error: '无效的设置数据' };
-    }
-    // 只保留白名单内的 key
-    const filtered = {};
-    for (const key of Object.keys(settings)) {
-      if (ALLOWED_SETTINGS.includes(key)) {
-        filtered[key] = settings[key];
-      }
-    }
-    store.set('settings', filtered);
-    return true;
-  });
-
   // 获取所有显示器信息
   ipcMain.handle(IPC_CHANNELS.GET_DISPLAYS, () => {
     return screen.getAllDisplays().map((d) => ({
@@ -444,7 +422,7 @@ function registerBaseIPCHandlers() {
   });
 
   // ─── 窗口拖拽（自定义拖拽，替代 -webkit-app-region: drag）───
-  ipcMain.on('move-window', (event, { deltaX, deltaY }) => {
+  ipcMain.on(IPC_CHANNELS.MOVE_WINDOW, (event, { deltaX, deltaY }) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win && !win.isDestroyed()) {
       const [x, y] = win.getPosition();
@@ -453,14 +431,14 @@ function registerBaseIPCHandlers() {
   });
 
   // ─── 右键菜单（Electron 原生 Menu，menu-def.js 单一来源）───
-  ipcMain.on('show-context-menu-native', (event) => {
+  ipcMain.on(IPC_CHANNELS.SHOW_CONTEXT_MENU_NATIVE, (event) => {
     const menu = buildNativeContextMenu();
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) menu.popup({ window: win });
   });
 
   // ─── 应用信息 ───
-  ipcMain.handle('get-version', () => {
+  ipcMain.handle(IPC_CHANNELS.GET_VERSION, () => {
     try {
       const pkg = require('../../package.json');
       return pkg.version || '1.0.0';
@@ -470,7 +448,7 @@ function registerBaseIPCHandlers() {
     }
   });
 
-  ipcMain.handle('get-app-path', () => {
+  ipcMain.handle(IPC_CHANNELS.GET_APP_PATH, () => {
     return app.getAppPath();
   });
 
