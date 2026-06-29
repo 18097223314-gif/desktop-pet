@@ -73,10 +73,10 @@ class DialogueManager {
 
   /**
    * 获取互动台词
-   * @param {string} interactionType 互动类型：'pet' | 'feed' | 'wash'
+   * @param {string} interactionType 互动类型：'pet' | 'feed' | 'wash' | 'work'
    * @param {Object} context 状态上下文
    * @param {string} context.emotion 情绪
-   * @param {string} context.affectionTier 亲密度分档：'low' | 'mid' | 'high'
+   * @param {string} context.affectionTier 亲密度分档：stranger | acquaintance | friend | close_friend | best_friend | soulmate | bonded
    * @param {number} context.hunger 饱食度
    * @param {number} context.mood 心情
    * @param {string} [context.itemName] 道具名称（feed时需要）
@@ -112,6 +112,18 @@ class DialogueManager {
 
     // 最终硬编码默认
     return this._getDefaultDialogue(interactionType, context);
+  }
+
+  /**
+   * 获取打工台词（分阶段：work_start / work_finish / work_cancel）
+   * @param {string} phase 打工阶段：'work_start' | 'work_finish' | 'work_cancel'
+   * @param {Object} context 状态上下文（同 getDialogue）
+   * @returns {string} 台词
+   */
+  getWorkDialogue(phase, context) {
+    // work 的 phase 作为 interactionType 传入 getDialogue
+    // 因为 dialogues.json 中 work 下分 work_start/work_finish/work_cancel 子键
+    return this.getDialogue(phase, context);
   }
 
   /**
@@ -185,6 +197,9 @@ class DialogueManager {
       pet: '爪爪蹭了蹭你的手~',
       feed: `爪爪吃了${context.itemName || '食物'}，好满足~`,
       wash: '爪爪洗得干干净净~',
+      work_start: '爪爪开始打工了！加油~',
+      work_finish: '爪爪打工回来了！~',
+      work_cancel: '爪爪取消了打工~',
     };
     return defaults[type] || '...';
   }
@@ -198,6 +213,7 @@ class DialogueManager {
       pet: `爪爪还在害羞中，${context.remaining}秒后再摸~`,
       feed: `爪爪刚吃过，${context.remaining}秒后再喂~`,
       wash: `爪爪刚洗过澡，${context.remaining}秒后再洗~`,
+      work: `爪爪正在打工中，${context.remaining}秒后再来~`,
     };
     return defaults[type] || '冷却中...';
   }
