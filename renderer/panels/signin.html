@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>爪爪签到</title>
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="../styles/animations.css">
+<link rel="stylesheet" href="../styles/design-system.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 520px; height: 480px;
+  background: transparent;
+  overflow: hidden;
+  font-family: var(--dp-font);
+}
+
+/* 面板填满窗口 + flex 布局 */
+.dp-panel {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.dp-panel-body {
+  flex: 1;
+  min-height: 0;
+  max-height: none !important;
+  overflow-y: auto;
+}
+
+/* 签到状态卡片 */
+.signin-hero {
+  background: linear-gradient(135deg, var(--dp-primary-50, #fff8e1), var(--dp-primary-light, #ffe082));
+  border: 1px solid var(--dp-primary-light, #ffe082);
+  border-radius: var(--dp-radius-lg, 12px);
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+.signin-hero-icon { font-size: 40px; margin-bottom: 6px; }
+.signin-hero-days {
+  font-family: var(--dp-font-display);
+  font-size: 32px; font-weight: 700;
+  color: var(--dp-primary, #f5a623);
+}
+.signin-hero-label {
+  font-size: 12px; color: var(--dp-text-secondary);
+  margin-top: 2px;
+}
+.signin-hero-total {
+  font-size: 11px; color: var(--dp-text-muted);
+  margin-top: 4px;
+}
+
+/* 签到按钮 */
+.signin-btn {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 10px 32px;
+  font-size: 15px; font-weight: 700;
+  font-family: var(--dp-font-display);
+  color: #fff;
+  background: linear-gradient(135deg, var(--dp-primary, #f5a623), #ff8a00);
+  border: none; border-radius: var(--dp-radius-md, 8px);
+  cursor: pointer;
+  transition: all var(--dp-transition-fast, 150ms);
+  box-shadow: 0 2px 8px rgba(245, 166, 35, 0.3);
+}
+.signin-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 166, 35, 0.4);
+}
+.signin-btn:active {
+  transform: translateY(0);
+}
+.signin-btn:disabled {
+  background: var(--dp-bg-card, #f0f0f0);
+  color: var(--dp-text-muted, #999);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 里程碑进度条 */
+.milestone-section-title {
+  font-family: var(--dp-font-display);
+  font-size: 13px; font-weight: 600;
+  color: var(--dp-text-primary);
+  margin-bottom: 8px;
+}
+
+.milestone-track {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 0 8px;
+}
+.milestone-track-line {
+  position: absolute;
+  top: 50%; left: 8px; right: 8px;
+  height: 3px;
+  background: var(--dp-border, #e0e0e0);
+  transform: translateY(-50%);
+  z-index: 0;
+}
+.milestone-track-progress {
+  position: absolute;
+  top: 50%; left: 8px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--dp-primary, #f5a623), #ff8a00);
+  transform: translateY(-50%);
+  z-index: 1;
+  transition: width 500ms ease;
+}
+.milestone-node {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.milestone-dot {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--dp-bg-card, #fff);
+  border: 2px solid var(--dp-border, #e0e0e0);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  transition: all var(--dp-transition-fast, 150ms);
+}
+.milestone-dot.reached {
+  background: linear-gradient(135deg, var(--dp-primary, #f5a623), #ff8a00);
+  border-color: var(--dp-primary, #f5a623);
+  color: #fff;
+}
+.milestone-dot.current {
+  border-color: var(--dp-primary, #f5a623);
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.2);
+}
+.milestone-day-label {
+  font-size: 10px; color: var(--dp-text-muted, #999);
+  font-weight: 600;
+}
+.milestone-day-label.reached {
+  color: var(--dp-primary, #f5a623);
+}
+
+/* 奖励列表 */
+.reward-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.reward-item {
+  background: var(--dp-bg-card, #f8f8f8);
+  border: 1px solid var(--dp-border, #e0e0e0);
+  border-radius: var(--dp-radius-md, 8px);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all var(--dp-transition-fast, 150ms);
+}
+.reward-item.reached {
+  background: var(--dp-primary-50, #fff8e1);
+  border-color: var(--dp-primary-light, #ffe082);
+}
+.reward-item.next {
+  border-color: var(--dp-primary, #f5a623);
+  box-shadow: 0 0 0 1px rgba(245, 166, 35, 0.15);
+}
+.reward-badge {
+  min-width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--dp-bg-card, #eee);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  color: var(--dp-text-muted, #999);
+  flex-shrink: 0;
+}
+.reward-item.reached .reward-badge {
+  background: linear-gradient(135deg, var(--dp-primary, #f5a623), #ff8a00);
+  color: #fff;
+}
+.reward-item.next .reward-badge {
+  color: var(--dp-primary, #f5a623);
+  border: 2px solid var(--dp-primary, #f5a623);
+  background: #fff;
+}
+.reward-info { flex: 1; min-width: 0; }
+.reward-title {
+  font-size: 13px; font-weight: 600;
+  color: var(--dp-text-primary);
+}
+.reward-title .reward-title-tag {
+  font-size: 11px; color: var(--dp-primary, #f5a623);
+  margin-left: 4px;
+}
+.reward-detail {
+  font-size: 11px; color: var(--dp-text-secondary);
+  margin-top: 2px;
+}
+.reward-check {
+  font-size: 16px; flex-shrink: 0;
+}
+
+/* toast 通知 */
+.signin-toast {
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+  background: rgba(20,20,20,0.95); border: 1px solid var(--dp-border-light, #333);
+  border-radius: var(--dp-radius-md, 8px); padding: 8px 16px;
+  font-size: 12px; color: var(--dp-text-primary);
+  z-index: 10000; opacity: 0; transition: opacity 200ms;
+  pointer-events: none;
+}
+.signin-toast.show { opacity: 1; }
+
+/* loading 状态 */
+.signin-loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--dp-text-muted);
+  font-size: 13px;
+}
+</style>
+</head>
+<body>
+<div class="dp-panel anim-panel-in" id="signin-panel">
+  <div class="dp-panel-header">
+    <span class="dp-panel-title">📅 签到</span>
+    <button class="dp-panel-close" id="close-btn" title="关闭 (ESC)">&times;</button>
+  </div>
+  <div class="dp-panel-body">
+    <div class="signin-loading" id="signin-loading">加载中...</div>
+
+    <!-- 签到状态（加载后显示） -->
+    <div id="signin-content" style="display:none">
+      <div class="signin-hero">
+        <div class="signin-hero-icon" id="signin-icon">🔥</div>
+        <div class="signin-hero-days" id="signin-days">0</div>
+        <div class="signin-hero-label">天连续签到</div>
+        <div class="signin-hero-total" id="signin-total"></div>
+        <button class="signin-btn" id="signin-btn">立即签到</button>
+      </div>
+
+      <!-- 里程碑进度 -->
+      <div class="milestone-section-title">🎯 签到里程碑</div>
+      <div class="milestone-track">
+        <div class="milestone-track-line"></div>
+        <div class="milestone-track-progress" id="milestone-progress"></div>
+        <div class="milestone-node" id="ms-node-1">
+          <div class="milestone-dot" id="ms-dot-1">1</div>
+          <div class="milestone-day-label" id="ms-label-1">1天</div>
+        </div>
+        <div class="milestone-node" id="ms-node-3">
+          <div class="milestone-dot" id="ms-dot-3">3</div>
+          <div class="milestone-day-label" id="ms-label-3">3天</div>
+        </div>
+        <div class="milestone-node" id="ms-node-7">
+          <div class="milestone-dot" id="ms-dot-7">7</div>
+          <div class="milestone-day-label" id="ms-label-7">7天</div>
+        </div>
+        <div class="milestone-node" id="ms-node-15">
+          <div class="milestone-dot" id="ms-dot-15">15</div>
+          <div class="milestone-day-label" id="ms-label-15">15天</div>
+        </div>
+        <div class="milestone-node" id="ms-node-30">
+          <div class="milestone-dot" id="ms-dot-30">30</div>
+          <div class="milestone-day-label" id="ms-label-30">30天</div>
+        </div>
+      </div>
+
+      <!-- 奖励列表 -->
+      <div class="reward-list" id="reward-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="signin-toast" id="signin-toast"></div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ─── 奖励配置（前端展示用，与 constants.js SIGNIN_REWARDS_V2 对齐）───
+  const SIGNIN_REWARDS = {
+    30: { gold: 2000, diamond: 30, exp: 500, item: 'material_dragon_scale', title: '月度之星', emoji: '🏆' },
+    15: { gold: 1000, diamond: 10, exp: 250, item: 'toy_music_box', title: '坚持不懈', emoji: '💎' },
+    7:  { gold: 500,  diamond: 5,  exp: 120, item: 'toy_rubiks_cube', title: '周周签到', emoji: '🎯' },
+    3:  { gold: 300,  diamond: 2,  exp: 60,  item: 'food_sushi', title: null, emoji: '🍱' },
+    1:  { gold: 100,  diamond: 0,  exp: 20,  item: 'food_kibble', title: null, emoji: '🐾' },
+  };
+
+  const MILESTONE_DAYS = [1, 3, 7, 15, 30];
+
+  let signinInfo = null;
+  let isLoading = false;
+
+  // ─── 从后端拉签到信息 ───
+  async function loadSigninInfo() {
+    if (isLoading) return;
+    isLoading = true;
+
+    try {
+      const result = await window.petAPI.signinGetInfo();
+      if (result && result.success !== false) {
+        // signinGetInfo 返回 data 对象或直接返回 info 对象
+        signinInfo = result.data || result;
+        renderSigninPanel();
+      } else {
+        showLoading('加载失败，点击重试');
+        isLoading = false;
+        return;
+      }
+    } catch (err) {
+      console.error('[SignIn] 获取签到信息失败:', err);
+      showLoading('加载失败，点击重试');
+      isLoading = false;
+      return;
+    }
+    isLoading = false;
+  }
+
+  function showLoading(msg) {
+    document.getElementById('signin-loading').textContent = msg || '加载中...';
+    document.getElementById('signin-loading').style.display = 'block';
+    document.getElementById('signin-content').style.display = 'none';
+  }
+
+  // ─── 渲染签到面板 ───
+  function renderSigninPanel() {
+    document.getElementById('signin-loading').style.display = 'none';
+    document.getElementById('signin-content').style.display = 'block';
+
+    if (!signinInfo) return;
+
+    const consecutiveDays = signinInfo.consecutiveDays || 0;
+    const totalDays = signinInfo.totalDays || 0;
+    const todaySigned = signinInfo.todaySigned || false;
+
+    // 签到英雄区
+    document.getElementById('signin-days').textContent = consecutiveDays;
+    document.getElementById('signin-total').textContent = `累计签到 ${totalDays} 天`;
+
+    // 图标：根据连续天数切换
+    let icon = '🐾';
+    if (consecutiveDays >= 30) icon = '🏆';
+    else if (consecutiveDays >= 15) icon = '💎';
+    else if (consecutiveDays >= 7) icon = '🎯';
+    else if (consecutiveDays >= 3) icon = '🔥';
+    else if (consecutiveDays >= 1) icon = '✨';
+    document.getElementById('signin-icon').textContent = icon;
+
+    // 签到按钮
+    const btn = document.getElementById('signin-btn');
+    if (todaySigned) {
+      btn.textContent = '✅ 今日已签到';
+      btn.disabled = true;
+    } else {
+      btn.textContent = '立即签到';
+      btn.disabled = false;
+    }
+
+    // 里程碑进度条
+    renderMilestones(consecutiveDays);
+
+    // 奖励列表
+    renderRewardList(consecutiveDays, todaySigned);
+  }
+
+  // ─── 里程碑节点渲染 ───
+  function renderMilestones(consecutiveDays) {
+    // 计算进度条宽度
+    let progressPercent = 0;
+    let lastReachedIdx = -1;
+
+    for (let i = 0; i < MILESTONE_DAYS.length; i++) {
+      const day = MILESTONE_DAYS[i];
+      const dotEl = document.getElementById('ms-dot-' + day);
+      const labelEl = document.getElementById('ms-label-' + day);
+
+      const reached = consecutiveDays >= day;
+      const isNext = !reached && (i === 0 || consecutiveDays >= MILESTONE_DAYS[i - 1]);
+
+      dotEl.className = 'milestone-dot';
+      labelEl.className = 'milestone-day-label';
+
+      if (reached) {
+        dotEl.classList.add('reached');
+        dotEl.textContent = '✓';
+        labelEl.classList.add('reached');
+        lastReachedIdx = i;
+      } else if (isNext) {
+        dotEl.classList.add('current');
+        dotEl.textContent = day;
+      } else {
+        dotEl.textContent = day;
+      }
+    }
+
+    // 进度条宽度计算：从第一个节点到最后一个节点之间分布
+    if (lastReachedIdx >= 0) {
+      const totalSegments = MILESTONE_DAYS.length - 1;
+      progressPercent = ((lastReachedIdx) / totalSegments) * 100;
+    }
+    const progressEl = document.getElementById('milestone-progress');
+    progressEl.style.width = progressPercent + '%';
+  }
+
+  // ─── 奖励列表渲染 ───
+  function renderRewardList(consecutiveDays, todaySigned) {
+    const list = document.getElementById('reward-list');
+    list.innerHTML = '';
+
+    // 从高到低展示
+    const sortedDays = [...MILESTONE_DAYS].sort((a, b) => b - a);
+
+    sortedDays.forEach(day => {
+      const reward = SIGNIN_REWARDS[day];
+      if (!reward) return;
+
+      const reached = consecutiveDays >= day;
+      const isNext = !reached && isNextMilestone(consecutiveDays, day);
+
+      // 构建奖励描述
+      const parts = [];
+      if (reward.gold) parts.push(`🪙${reward.gold}`);
+      if (reward.diamond) parts.push(`💎${reward.diamond}`);
+      if (reward.exp) parts.push(`⚡${reward.exp}`);
+      if (reward.item) parts.push(`🎁${formatItemName(reward.item)}`);
+
+      const el = document.createElement('div');
+      el.className = 'reward-item';
+      if (reached) el.classList.add('reached');
+      if (isNext) el.classList.add('next');
+
+      el.innerHTML = `
+        <div class="reward-badge">${reward.emoji}</div>
+        <div class="reward-info">
+          <div class="reward-title">
+            ${reward.title ? reward.title : `连续${day}天`}
+            <span class="reward-title-tag">${day}天</span>
+          </div>
+          <div class="reward-detail">${parts.join(' ')}</div>
+        </div>
+        <div class="reward-check">${reached ? '✅' : (isNext ? '🔜' : '🔒')}</div>
+      `;
+
+      list.appendChild(el);
+    });
+  }
+
+  function isNextMilestone(consecutiveDays, day) {
+    const sorted = [...MILESTONE_DAYS].sort((a, b) => a - b);
+    for (const d of sorted) {
+      if (consecutiveDays < d) return d === day;
+    }
+    return false;
+  }
+
+  // ─── 道具名称格式化 ───
+  function formatItemName(itemId) {
+    const names = {
+      'food_kibble': '猫粮',
+      'food_sushi': '寿司',
+      'toy_rubiks_cube': '魔方',
+      'toy_music_box': '八音盒',
+      'material_dragon_scale': '龙鳞',
+    };
+    return names[itemId] || itemId;
+  }
+
+  // ─── 执行签到 ───
+  async function doSignin() {
+    const btn = document.getElementById('signin-btn');
+    btn.disabled = true;
+    btn.textContent = '签到中...';
+
+    try {
+      const result = await window.petAPI.signinClaim();
+      if (result && result.success) {
+        const days = result.data?.consecutiveDays || result.consecutiveDays || 1;
+        const reward = result.data?.reward || result.reward || {};
+        showToast(`🎉 签到成功！连续${days}天`);
+
+        // 刷新面板
+        await loadSigninInfo();
+      } else {
+        showToast('❌ ' + (result?.message || '签到失败'));
+        btn.disabled = false;
+        btn.textContent = '立即签到';
+      }
+    } catch (err) {
+      showToast('❌ 签到出错: ' + (err.message || '未知错误'));
+      btn.disabled = false;
+      btn.textContent = '立即签到';
+    }
+  }
+
+  // ─── Toast ───
+  function showToast(msg) {
+    const toast = document.getElementById('signin-toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+
+  // ─── 事件绑定 ───
+  document.getElementById('signin-btn').addEventListener('click', doSignin);
+
+  // 加载失败时点击重试
+  document.getElementById('signin-loading').addEventListener('click', loadSigninInfo);
+
+  // ─── 初始化 ───
+  console.log('[SignIn] Panel IIFE starting, window.petAPI:', !!window?.petAPI);
+  loadSigninInfo();
+})();
+</script>
+<script src="../components/panel-common.js"></script>
+</body>
+</html>

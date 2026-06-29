@@ -188,6 +188,7 @@ function createPanelWindow(panelName, options = {}) {
     'mini-game': { width: 520, height: 480 },
     settings: { width: 520, height: 480 },
     theme: { width: 520, height: 480 },
+    signin: { width: 520, height: 480 },
   };
 
   const size = PANEL_SIZES[panelName] || { width: 520, height: 480 };
@@ -325,9 +326,7 @@ function handleMenuAction(action) {
       }
       break;
     case 'signin':
-      if (petWindow && !petWindow.isDestroyed()) {
-        petWindow.webContents.send(IPC_CHANNELS.PET_MENU_ACTION, 'signin');
-      }
+      createPanelWindow('signin');
       break;
     case 'work':
       if (petWindow && !petWindow.isDestroyed()) {
@@ -389,7 +388,7 @@ function buildNativeContextMenu() {
 
 function registerBaseIPCHandlers() {
   // 打开面板
-  const ALLOWED_PANELS = ['inventory', 'status', 'work', 'mini-game', 'settings', 'theme'];
+  const ALLOWED_PANELS = ['inventory', 'status', 'work', 'mini-game', 'settings', 'theme', 'signin'];
   ipcMain.handle(IPC_CHANNELS.OPEN_PANEL, (event, panelName) => {
     if (!ALLOWED_PANELS.includes(panelName)) {
       return { success: false, error: '无效的面板名称' };
