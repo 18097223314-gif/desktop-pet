@@ -267,11 +267,7 @@ body {
           // 显示购买确认 — Modal 替代 confirm
           const confirmed = await Modal.confirm('确认购买', `花费 ${theme.price} 金币购买「${theme.name}」？`, '购买', '取消');
           if (confirmed) {
-            theme.owned = true;
-            theme.equipped = true;
-            equipTheme(theme);
-            renderThemes();
-            showDetail(theme);
+            await purchaseTheme(theme);
           }
           return;
         }
@@ -284,6 +280,31 @@ body {
 
       grid.appendChild(card);
     });
+  }
+
+  // ─── 购买主题（调用后端扣金币 + 记录所有权）───
+  async function purchaseTheme(theme) {
+    if (!window.petAPI || !window.petAPI.themePurchase) {
+      await Modal.alert('错误', '无法连接后端服务');
+      return;
+    }
+    try {
+      const result = await window.petAPI.themePurchase(theme.id);
+      if (result && result.success) {
+        theme.owned = true;
+        // 购买成功后自动装备
+        await equipTheme(theme);
+        renderThemes();
+        showDetail(theme);
+        await Modal.alert('购买成功', `🎉 已花费 ${result.price} 金币购买「${theme.name}」`);
+      } else {
+        await Modal.alert('购买失败', result?.message || '未知错误');
+      }
+    } catch (err) {
+      // 后端抛出的错误：金币不足、已拥有、免费主题等
+      const msg = err.message || err || '未知错误';
+      await Modal.alert('购买失败', msg.replace(/^\[IH-THEME-BUY\]\s*/, ''));
+    }
   }
 
   // ─── 装备主题 ───
@@ -342,11 +363,7 @@ body {
         if (theme.type === 'paid') {
           const confirmed = await Modal.confirm('确认购买', `花费 ${theme.price} 金币购买「${theme.name}」？`, '购买', '取消');
           if (confirmed) {
-            theme.owned = true;
-            theme.equipped = true;
-            equipTheme(theme);
-            renderThemes();
-            showDetail(theme);
+            await purchaseTheme(theme);
           }
         } else {
           await Modal.alert('提示', `「${theme.name}」为活动皮肤，请关注活动获取`);
@@ -370,9 +387,20 @@ body {
   // ─── 初始化：从后端恢复已保存的主题 ───
   async function initTheme() {
     try {
+      // 1. 从后端恢复已拥有主题列表
+      if (window.petAPI && window.petAPI.themeGetOwned) {
+        const ownedList = await window.petAPI.themeGetOwned();
+        if (Array.isArray(ownedList)) {
+          THEMES.forEach(t => {
+            t.owned = ownedList.includes(t.id);
+          });
+        }
+      }
+
+      // 2. 从后端恢复当前装备的主题
       if (window.petAPI && window.petAPI.themeGet) {
         const savedThemeId = await window.petAPI.themeGet();
-        if (savedThemeId && savedThemeId !== 'default_white') {
+        if (savedThemeId) {
           const saved = THEMES.find(t => t.id === savedThemeId);
           if (saved) {
             THEMES.forEach(t => t.equipped = false);

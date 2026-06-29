@@ -44,6 +44,23 @@ contextBridge.exposeInMainWorld('petAPI', {
     ipcRenderer.on('pet:debug-log', (_event, msg) => callback(msg));
   },
 
+  // ─── 升级/进化/里程碑推送（主进程 → 渲染进程）───
+  onLevelUp: (callback) => {
+    ipcRenderer.on('pet:level-up', (_event, data) => callback(data));
+  },
+  onMilestone: (callback) => {
+    ipcRenderer.on('pet:milestone', (_event, data) => callback(data));
+  },
+  onEvolutionReady: (callback) => {
+    ipcRenderer.on('pet:evolution-ready', (_event, data) => callback(data));
+  },
+  onPetEvent: (callback) => {
+    ipcRenderer.on('pet:event', (_event, data) => callback(data));
+  },
+  onEvolved: (callback) => {
+    ipcRenderer.on('pet:evolved', (_event, data) => callback(data));
+  },
+
   // ══════════════════════════════════════════
   // 业务 IPC（冒号分隔，与 constants.js 对齐）
   // ══════════════════════════════════════════
@@ -117,4 +134,6 @@ contextBridge.exposeInMainWorld('petAPI', {
   // ─── 主题 ───
   themeGet: () => ipcRenderer.invoke('theme:get'),
   themeSet: (themeId) => ipcRenderer.invoke('theme:set', { themeId }),
+  themePurchase: (themeId) => ipcRenderer.invoke('theme:purchase', { themeId }),
+  themeGetOwned: () => ipcRenderer.invoke('theme:owned-list'),
 });

@@ -539,8 +539,24 @@ body {
 
   foodStart.addEventListener('click', startFoodGame);
 
-  function startFoodGame() {
+  async function startFoodGame() {
     if (foodActive) return;
+
+    // 先调用后端检查每日次数限制
+    try {
+      const startResult = await api.minigameStart('catch-food');
+      if (!startResult || !startResult.success) {
+        foodStart.style.display = 'flex';
+        foodStart.innerHTML = `<span>${startResult?.error || '今日次数已用完'}</span><small>明天再来</small>`;
+        return;
+      }
+    } catch (err) {
+      console.error('[Food] minigameStart failed:', err);
+      foodStart.style.display = 'flex';
+      foodStart.innerHTML = '<span>启动失败</span><small>点击重试</small>';
+      return;
+    }
+
     foodActive = true;
     foodScore = 0;
     foodRemaining = FOOD_TOTAL;

@@ -417,7 +417,7 @@ body {
       renameBtn.disabled = true;
       renameBtn.textContent = '保存中...';
       try {
-        const result = await api.userUpdate({ updates: { name: newName } });
+        const result = await window.petAPI.userUpdate({ updates: { name: newName } });
         if (result && result.success) {
           renameMsg.className = 'rename-msg ok';
           renameMsg.textContent = '✅ 改名成功！';

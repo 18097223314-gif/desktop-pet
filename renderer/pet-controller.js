@@ -324,6 +324,72 @@
     });
   }
 
+  // ══════════════════════════════════════════════
+  // 升级 / 里程碑 / 进化 / 事件 推送通知
+  // ══════════════════════════════════════════════
+
+  // ─── 升级通知 ───
+  if (window.petAPI && window.petAPI.onLevelUp) {
+    window.petAPI.onLevelUp((data) => {
+      console.log('[PetController] 升级推送:', data);
+      const level = data.level || data.newLevel || '?';
+      BubbleComponent.show(`🎉 升级了！ Lv.${level}`, 3500);
+      jump();
+      spawnHearts(10);
+      AnimationSystem.setStatus('idle', 'ecstatic');
+    });
+  }
+
+  // ─── 里程碑通知 ───
+  if (window.petAPI && window.petAPI.onMilestone) {
+    window.petAPI.onMilestone((data) => {
+      console.log('[PetController] 里程碑推送:', data);
+      const title = data.title || data.milestone || '里程碑';
+      BubbleComponent.show(`🏆 ${title}`, 3500);
+      spawnHearts(6);
+      AnimationSystem.playOneShot('anim-wiggle', 600);
+    });
+  }
+
+  // ─── 进化就绪通知 ───
+  if (window.petAPI && window.petAPI.onEvolutionReady) {
+    window.petAPI.onEvolutionReady((data) => {
+      console.log('[PetController] 进化就绪推送:', data);
+      BubbleComponent.show('⚡ 进化条件已满足！可以去进化了', 4000);
+      AnimationSystem.playOneShot('anim-wiggle', 600);
+      jump();
+    });
+  }
+
+  // ─── 宠物事件通知 ───
+  if (window.petAPI && window.petAPI.onPetEvent) {
+    window.petAPI.onPetEvent((data) => {
+      console.log('[PetController] 宠物事件推送:', data);
+      const name = data.name || data.eventName || '事件';
+      const emoji = data.emoji || '📢';
+      BubbleComponent.show(`${emoji} ${name}`, 3000);
+    });
+  }
+
+  // ─── 进化完成通知 ───
+  if (window.petAPI && window.petAPI.onEvolved) {
+    window.petAPI.onEvolved((data) => {
+      console.log('[PetController] 进化完成推送:', data);
+      const branchName = data.name || data.branch || '新形态';
+      const color = data.color || '#FFD700';
+      BubbleComponent.show(`✨ 进化完成！${branchName}`, 4000);
+      spawnHearts(12);
+      jump();
+      AnimationSystem.setStatus('idle', 'ecstatic');
+      // 闪光特效
+      const flash = document.createElement('div');
+      flash.style.cssText = `position:fixed;inset:0;background:${color};opacity:0.3;pointer-events:none;z-index:9999;transition:opacity 1s;`;
+      document.body.appendChild(flash);
+      setTimeout(() => { flash.style.opacity = '0'; }, 100);
+      setTimeout(() => flash.remove(), 1200);
+    });
+  }
+
   // ─── 定时状态监控（调试用）───
   setInterval(() => {
     const animState = AnimationSystem.getState();

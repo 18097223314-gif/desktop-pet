@@ -202,6 +202,8 @@ const IPC_CHANNELS = {
   // ─── 主题 ────────────────────────────────────
   THEME_GET: 'theme:get',
   THEME_SET: 'theme:set',
+  THEME_PURCHASE: 'theme:purchase',
+  THEME_OWNED_LIST: 'theme:owned-list',
 
   // ─── 系统 ────────────────────────────────────
   SYSTEM_RESET_SAVE: 'system:reset-save',

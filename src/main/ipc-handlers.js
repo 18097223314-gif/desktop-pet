@@ -785,22 +785,88 @@ class IPCHandlers {
   // ══════════════════════════════════════════════
 
   _handleTheme() {
+    // ─── 合法主题定义（与前端 theme.html 保持一致）───
+    const THEME_REGISTRY = {
+      default_white: { type: 'free', price: 0 },
+      orange_cat:    { type: 'free', price: 0 },
+      black_cat:     { type: 'free', price: 0 },
+      raccoon:       { type: 'paid', price: 128 },
+      panda:         { type: 'paid', price: 168 },
+      bunny:         { type: 'paid', price: 128 },
+      fox:           { type: 'paid', price: 168 },
+      dragon:        { type: 'event', price: 0 },
+      sakura:        { type: 'event', price: 0 },
+    };
+    const FREE_THEMES = Object.entries(THEME_REGISTRY)
+      .filter(([, v]) => v.type === 'free').map(([k]) => k);
+
     // 获取当前主题
     this._wrapHandler(IPC_CHANNELS.THEME_GET, () => {
       return this.store.get('settings.theme', 'default_white');
     });
 
-    // 设置主题
+    // 设置主题（增加所有权校验）
     this._wrapHandler(IPC_CHANNELS.THEME_SET, (payload) => {
       const themeId = payload?.themeId;
       if (!themeId || typeof themeId !== 'string') {
         throw new Error('[IH-THEME] 缺少有效的 themeId');
       }
-      // 合并写入 settings.theme，保留其他设置项
+      // 免费主题直接放行，付费/活动主题需检查所有权
+      if (!FREE_THEMES.includes(themeId)) {
+        const ownedList = this.store.get('settings.ownedThemes', []);
+        if (!ownedList.includes(themeId)) {
+          throw new Error('[IH-THEME] 尚未拥有该主题，请先购买');
+        }
+      }
       const currentSettings = this.store.get('settings', {});
       currentSettings.theme = themeId;
       this.store.set('settings', currentSettings);
       return { themeId, saved: true };
+    });
+
+    // 购买主题（扣金币 + 记录所有权）
+    this._wrapHandler(IPC_CHANNELS.THEME_PURCHASE, (payload) => {
+      const themeId = payload?.themeId;
+      if (!themeId || typeof themeId !== 'string') {
+        throw new Error('[IH-THEME-BUY] 缺少有效的 themeId');
+      }
+      const themeDef = THEME_REGISTRY[themeId];
+      if (!themeDef) {
+        throw new Error('[IH-THEME-BUY] 未知主题: ' + themeId);
+      }
+      if (themeDef.type === 'free') {
+        throw new Error('[IH-THEME-BUY] 免费主题无需购买');
+      }
+      if (themeDef.type === 'event') {
+        throw new Error('[IH-THEME-BUY] 活动主题暂不可购买');
+      }
+      // 检查是否已拥有
+      const ownedList = this.store.get('settings.ownedThemes', []);
+      if (ownedList.includes(themeId)) {
+        throw new Error('[IH-THEME-BUY] 已拥有该主题');
+      }
+      // 扣金币
+      const userId = this._getUserId(payload);
+      const price = themeDef.price;
+      try {
+        this.economy.spendGold(userId, price);
+      } catch (err) {
+        throw new Error('[IH-THEME-BUY] 金币不足（需要 ' + price + ' 金币）');
+      }
+      this.saveManager.markDirty('economy');
+      // 记录所有权
+      ownedList.push(themeId);
+      const currentSettings = this.store.get('settings', {});
+      currentSettings.ownedThemes = ownedList;
+      this.store.set('settings', currentSettings);
+      return { success: true, themeId, price, message: '购买成功' };
+    });
+
+    // 获取已拥有主题列表
+    this._wrapHandler(IPC_CHANNELS.THEME_OWNED_LIST, () => {
+      const ownedList = this.store.get('settings.ownedThemes', []);
+      // 免费主题默认拥有
+      return [...new Set([...FREE_THEMES, ...ownedList])];
     });
   }
 }

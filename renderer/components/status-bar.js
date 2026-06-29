@@ -20,7 +20,7 @@ const StatusBarComponent = (() => {
   }
 
   function updateMiniBars(data) {
-    console.log('[StatusBar] updateMiniBars called with:', JSON.stringify(data));
+    // updateMiniBars: 由 pet-controller.js 的 PET_STATE_PUSH 监听器调用
     for (const [key, ids] of Object.entries(MAPPING)) {
       if (data[key] === undefined) {
         console.log('[StatusBar] SKIP', key, '— undefined');
@@ -40,7 +40,7 @@ const StatusBarComponent = (() => {
 
   function showFullPanel() {
     if (window.petAPI && window.petAPI.openPanel) {
-      window.petAPI.openPanel('settings');
+      window.petAPI.openPanel('status');
     }
   }
 
