@@ -29,7 +29,7 @@ const StatusBarComponent = (() => {
       const val = Math.round(data[key]);
 
       const barEl = document.getElementById(ids.barId);
-      if (barEl) barEl.style.width = val + '%';
+      if (barEl) barEl.style.transform = `scaleX(${val / 100})`;
       else console.warn('[StatusBar] barEl not found:', ids.barId);
 
       const valEl = document.getElementById(ids.valId);

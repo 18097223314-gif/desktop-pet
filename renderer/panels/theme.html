@@ -44,6 +44,7 @@ body {
 }
 .theme-current-icon { font-size: 48px; }
 .theme-current-info h3 {
+  font-family: var(--dp-font-display);
   font-size: var(--dp-font-lg); color: var(--dp-text-primary); font-weight: 600;
 }
 .theme-current-info p {
@@ -217,14 +218,14 @@ body {
   // ─── 主题数据 ───
   const THEMES = [
     { id: 'default_white', name: '默认白猫', icon: '🐱', color: '#faf6ef', type: 'free', desc: '初始皮肤，纯白色的小猫咪', owned: true, equipped: true, rarity: 'common' },
-    { id: 'orange_cat',    name: '橘猫',     icon: '🐈', color: '#ffd699', type: 'free', desc: '胖橘本橘，天生吃货', owned: true, equipped: false, rarity: 'common' },
+    { id: 'orange_cat',    name: '橘猫',     icon: '🐈', color: 'var(--dp-theme-cream)', type: 'free', desc: '胖橘本橘，天生吃货', owned: true, equipped: false, rarity: 'common' },
     { id: 'black_cat',     name: '黑猫',     icon: '🐈‍⬛', color: '#333', type: 'free', desc: '神秘优雅的黑色猫咪', owned: true, equipped: false, rarity: 'common' },
-    { id: 'raccoon',       name: '小浣熊',   icon: '🦝', color: '#8B7355', type: 'paid', price: 128, desc: '灵活的小手，什么都想吃', owned: false, equipped: false, rarity: 'rare' },
+    { id: 'raccoon',       name: '小浣熊',   icon: '🦝', color: 'var(--dp-theme-brown)', type: 'paid', price: 128, desc: '灵活的小手，什么都想吃', owned: false, equipped: false, rarity: 'rare' },
     { id: 'panda',         name: '小熊猫',   icon: '🐼', color: '#fff', type: 'paid', price: 168, desc: '国宝级可爱，爱吃竹子', owned: false, equipped: false, rarity: 'rare' },
-    { id: 'bunny',         name: '小兔子',   icon: '🐰', color: '#FFE4E1', type: 'paid', price: 128, desc: '蹦蹦跳跳的粉色小兔', owned: false, equipped: false, rarity: 'rare' },
-    { id: 'fox',           name: '小狐狸',   icon: '🦊', color: '#FF8C00', type: 'paid', price: 168, desc: '狡黠又迷人的小狐狸', owned: false, equipped: false, rarity: 'rare' },
-    { id: 'dragon',        name: '小龙',     icon: '🐉', color: '#2d5a27', type: 'event', source: '端午限定', desc: '端午活动限定皮肤，飞龙在天', owned: false, equipped: false, rarity: 'epic' },
-    { id: 'sakura',        name: '樱花猫',   icon: '🌸', color: '#FFB7C5', type: 'event', source: '春日限定', desc: '樱花季节限定，粉色花瓣飘落', owned: false, equipped: false, rarity: 'epic' },
+    { id: 'bunny',         name: '小兔子',   icon: '🐰', color: 'var(--dp-theme-pink)', type: 'paid', price: 128, desc: '蹦蹦跳跳的粉色小兔', owned: false, equipped: false, rarity: 'rare' },
+    { id: 'fox',           name: '小狐狸',   icon: '🦊', color: 'var(--dp-theme-deep-orange)', type: 'paid', price: 168, desc: '狡黠又迷人的小狐狸', owned: false, equipped: false, rarity: 'rare' },
+    { id: 'dragon',        name: '小龙',     icon: '🐉', color: 'var(--dp-theme-forest)', type: 'event', source: '端午限定', desc: '端午活动限定皮肤，飞龙在天', owned: false, equipped: false, rarity: 'epic' },
+    { id: 'sakura',        name: '樱花猫',   icon: '🌸', color: 'var(--dp-theme-blush)', type: 'event', source: '春日限定', desc: '樱花季节限定，粉色花瓣飘落', owned: false, equipped: false, rarity: 'epic' },
   ];
 
   let activeFilter = 'all';

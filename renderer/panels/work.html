@@ -64,11 +64,11 @@ body {
 }
 .work-item.active {
   border-color: var(--dp-primary-light);
-  background: rgba(124, 92, 252, 0.08);
+  background: var(--dp-primary-50);
 }
 .work-icon { font-size: 28px; flex-shrink: 0; }
 .work-info { flex: 1; min-width: 0; }
-.work-name { font-size: 14px; font-weight: 600; color: var(--dp-text-primary); }
+.work-name { font-family: var(--dp-font-display); font-size: 14px; font-weight: 600; color: var(--dp-text-primary); }
 .work-desc { font-size: 11px; color: var(--dp-text-secondary); margin-top: 2px; }
 .work-meta { font-size: 10px; color: var(--dp-text-muted); margin-top: 4px; }
 .work-meta span { margin-right: 8px; }
@@ -79,30 +79,30 @@ body {
 
 /* 当前打工状态 */
 .work-status {
-  background: rgba(124, 92, 252, 0.06);
+  background: var(--dp-primary-50);
   border: 1px solid var(--dp-primary);
   border-radius: var(--dp-radius-md);
   padding: 14px;
   text-align: center;
   margin-bottom: 10px;
 }
-.work-status-title { font-size: 14px; font-weight: 600; color: var(--dp-text-primary); margin-bottom: 6px; }
+.work-status-title { font-family: var(--dp-font-display); font-size: 14px; font-weight: 600; color: var(--dp-text-primary); margin-bottom: 6px; }
 .work-status-countdown { font-size: 22px; font-weight: 700; color: var(--dp-primary-light); margin: 8px 0; }
 .work-status-actions { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
 .btn-cancel {
-  background: rgba(255,85,85,0.15); color: #ff5555;
-  border: 1px solid rgba(255,85,85,0.3); border-radius: var(--dp-radius-sm);
+  background: var(--dp-btn-cancel-bg); color: var(--dp-btn-cancel-color);
+  border: 1px solid var(--dp-btn-cancel-border); border-radius: var(--dp-radius-sm);
   padding: 6px 16px; font-size: 12px; cursor: pointer;
   transition: all var(--dp-transition-fast);
 }
-.btn-cancel:hover { background: rgba(255,85,85,0.25); }
+.btn-cancel:hover { background: var(--dp-btn-cancel-hover); }
 .btn-finish {
-  background: rgba(34,197,94,0.15); color: #22c55e;
-  border: 1px solid rgba(34,197,94,0.3); border-radius: var(--dp-radius-sm);
+  background: var(--dp-btn-success-bg); color: var(--dp-btn-success-color);
+  border: 1px solid var(--dp-btn-success-border); border-radius: var(--dp-radius-sm);
   padding: 6px 16px; font-size: 12px; cursor: pointer;
   transition: all var(--dp-transition-fast);
 }
-.btn-finish:hover { background: rgba(34,197,94,0.25); }
+.btn-finish:hover { background: var(--dp-btn-success-hover); }
 .btn-finish:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* 提示 */

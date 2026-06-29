@@ -111,7 +111,7 @@ body {
   transition: all 0.3s;
 }
 .rps-result.win { color: var(--dp-text-success); }
-.rps-result.lose { color: #ff4757; }
+.rps-result.lose { color: var(--dp-game-red); }
 .rps-result.draw { color: var(--dp-text-muted); }
 .rps-vs {
   display: flex; justify-content: center; align-items: center; gap: 24px;
@@ -227,7 +227,7 @@ body {
 }
 @keyframes wrong-flash {
   0%, 100% { border-color: var(--dp-border); }
-  50% { border-color: #ff4757; background: rgba(255,71,87,0.1); }
+  50% { border-color: var(--dp-game-red); background: rgba(255,71,87,0.1); }
 }
 .memory-start-btn {
   padding: 10px 32px;

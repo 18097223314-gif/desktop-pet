@@ -117,6 +117,7 @@
 .dp-panel-header:active { cursor: grabbing; }
 
 .dp-panel-title {
+  font-family: var(--dp-font-display);
   font-size: var(--dp-font-lg);
   font-weight: 600;
   color: var(--dp-text-primary);
@@ -137,9 +138,9 @@
   -webkit-app-region: no-drag;
 }
 .dp-panel-close:hover {
-  background: rgba(255, 85, 85, 0.15);
+  background: var(--dp-btn-cancel-bg);
   color: var(--dp-text-danger);
-  border-color: rgba(255, 85, 85, 0.3);
+  border-color: var(--dp-btn-cancel-border);
 }
 
 /* ─── 面板主体 ─── */
@@ -190,7 +191,7 @@
 .dp-nav-item.active {
   color: var(--dp-primary-light);
   border-left-color: var(--dp-primary);
-  background: rgba(124, 92, 252, 0.08);
+  background: var(--dp-primary-50);
 }
 .dp-nav-icon {
   font-size: 20px;
@@ -303,10 +304,10 @@
 
 .dp-btn-danger {
   color: var(--dp-text-danger);
-  border-color: rgba(255, 85, 85, 0.3);
+  border-color: var(--dp-btn-cancel-border);
 }
 .dp-btn-danger:hover {
-  background: rgba(255, 85, 85, 0.1);
+  background: var(--dp-btn-cancel-bg);
 }
 
 /* ─── 网格布局 ─── */
@@ -368,9 +369,9 @@
   font-size: 10px;
   font-weight: 600;
 }
-.dp-tag-free { background: rgba(92, 219, 114, 0.2); color: #5cdb72; }
-.dp-tag-paid { background: rgba(124, 92, 252, 0.2); color: #9b82fc; }
-.dp-tag-event { background: rgba(255, 107, 157, 0.2); color: #ff6b9d; }
+.dp-tag-free { background: rgba(92, 219, 114, 0.2); color: var(--dp-success); }
+.dp-tag-paid { background: rgba(124, 92, 252, 0.2); color: var(--dp-primary-light); }
+.dp-tag-event { background: rgba(255, 107, 157, 0.2); color: var(--dp-accent); }
 
 /* ─── Tab 切换 ─── */
 .dp-tabs {
@@ -393,7 +394,7 @@
 }
 .dp-tab:hover { color: var(--dp-text-secondary); }
 .dp-tab.active {
-  background: rgba(124, 92, 252, 0.15);
+  background: var(--dp-primary-50);
   color: var(--dp-primary-light);
 }
 
